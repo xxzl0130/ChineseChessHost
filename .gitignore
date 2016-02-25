@@ -7,6 +7,12 @@
 *.userosscache
 *.sln.docstates
 
+# Arduino
+__vm/
+
+# Chinesechess AI engine
+Engine/
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
