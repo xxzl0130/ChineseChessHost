@@ -134,11 +134,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DataFrame.cpp" />
     <ClCompile Include="Host.cpp" />
+    <ClCompile Include="MySerial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Slave\CommonDef.h" />
+    <ClInclude Include="DataFrame.h" />
     <ClInclude Include="HostDef.h" />
+    <ClInclude Include="MySerial.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

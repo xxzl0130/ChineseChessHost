@@ -13,6 +13,15 @@
 // LED针脚
 #define ledPin 13
 
+// 开始按键
+#define StartKey	22
+// 结束按键
+#define EndKey		23
+// 左按键
+#define LeftKey		24
+// 右按键
+#define RightKey	25
+
 #ifdef DEBUG
 // 测试使用的串口
 #define comSer Serial
