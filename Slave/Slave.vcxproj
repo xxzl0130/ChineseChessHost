@@ -79,17 +79,21 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ChessBoard.h" />
     <ClInclude Include="CommonDef.h" />
     <ClInclude Include="MatrixKeyboard.h" />
     <ClInclude Include="SlaveMain.h" />
     <ClInclude Include="SlaveDef.h" />
-    <ClInclude Include="StpperMotor.h" />
+    <ClInclude Include="SlipTable.h" />
+    <ClInclude Include="StepperMotor.h" />
     <ClInclude Include="__vm\.Slave.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ChessBoard.cpp" />
     <ClCompile Include="MatrixKeyboard.cpp" />
     <ClCompile Include="SlaveMain.cpp" />
-    <ClCompile Include="StpperMotor.cpp" />
+    <ClCompile Include="SlipTable.cpp" />
+    <ClCompile Include="StepperMotor.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

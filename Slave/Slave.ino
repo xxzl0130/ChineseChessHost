@@ -3,9 +3,11 @@
 #include <String.h>
 #include "CommonDef.h"
 #include "SlaveDef.h"
-#include "StpperMotor.h"
+#include "StepperMotor.h"
 #include "SlaveMain.h"
 #include "MatrixKeyboard.h"
+#include "ChessBoard.h"
+#include "SlipTable.h"
 /*
 Todo list:
 // 初始化棋盘
@@ -42,19 +44,6 @@ uchr drawCnt;
 uchr resignCnt;
 // 难度
 DIFFICULTY diff = easy;
-// 棋盘
-char board[BoardRow][BoardCol] = {
-	{ r,h,e,a,k,a,e,h,r },
-	{ b,b,b,b,b,b,b,b,b },
-	{ b,c,b,b,b,b,b,c,b },
-	{ p,b,p,b,p,b,p,b,p },
-	{ b,b,b,b,b,b,b,b,b },
-	{ b,b,b,b,b,b,b,b,b },
-	{ P,b,P,b,P,b,P,b,P },
-	{ b,C,b,b,b,b,b,C,b },
-	{ b,b,b,b,b,b,b,b,b },
-	{ R,H,E,A,K,A,E,H,R }
-};
 
 // 检测人移动棋子
 bool humanMoveChess();

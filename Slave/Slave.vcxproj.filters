@@ -27,24 +27,36 @@
     <ClInclude Include="SlaveDef.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="StpperMotor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MatrixKeyboard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SlaveMain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SlipTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StepperMotor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ChessBoard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="StpperMotor.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="MatrixKeyboard.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="SlaveMain.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StepperMotor.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SlipTable.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ChessBoard.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>
