@@ -10,9 +10,16 @@
 #include "SlipTable.h"
 /*
 Todo list:
-// 初始化棋盘
-void initBoard();
 
+###调整求和、认输逻辑
+###中断中无法使用串口
+
+// 开始
+void start();
+// 游戏进行
+void playing(); // 需要调整
+// 重置棋盘
+void reset();
 // 检测人移动棋子
 bool humanMoveChess();
 
@@ -29,7 +36,6 @@ LiquidCrystal_I2C Lcd(0x27, 16, 2);
 0*                *0x80
 1*                *0xC0
  ******************
-    >Red<  Black  
 */
 
 String tmp;
@@ -44,6 +50,10 @@ uchr drawCnt;
 uchr resignCnt;
 // 难度
 DIFFICULTY diff = easy;
+// 游戏状态 0 正常，1 求和，2 认输
+GameState state = Play;
+// 棋盘
+ChessBoard board;
 
 // 检测人移动棋子
 bool humanMoveChess();
@@ -51,10 +61,15 @@ bool humanMoveChess();
 void executeOrder(String& order);
 // 求和 flag:false 人 true 机
 bool draw(bool flag);
+// 中断用函数 调用draw
+void callDraw();
+// 中断用函数 调用resign
+void callResign();
 // 认输 flag:false 人 true 机
 bool resign(bool flag);
 // 滑台移动棋子
 void moveChess(char order[4]);
+void moveChess(String order);
 // 等待开始
 void waitStart();
 // 选择难度
@@ -64,9 +79,15 @@ void selectOrder();
 // 开始
 void start();
 // 游戏进行
-void play();
-// 恢复棋盘
+void playing();
+// 重置棋盘
 void reset();
+// 结束游戏
+void end(GameState state);
+// 打开中断
+void startInt();
+// 关闭中断
+void endInt();
 
 void setup()
 {
@@ -80,7 +101,7 @@ void loop()
 {
 	waitStart();
 	start();
-	play();
+	playing();
 	reset();
 }
 
@@ -132,41 +153,98 @@ bool draw(bool flag)
 	if (drawCnt >= 2)
 	{// 双方同意和棋
 		drawCnt = 0;
-		// todo: 显示屏显示和棋信息
+		end(Draw);
 		return true;
 	}
 	if (flag == false)
 	{// 人提和
-		sendBoard(1);
+		sendBoard(board.board,Draw);
 	}
 	else
 	{// 引擎提和
-		// todo: 显示屏显示和棋信息
+		Lcd.clear();
+		Lcd.setCursor(0, 0);
+		Lcd.print("Computer draw.");
+		Lcd.setCursor(0, 1);
+		Lcd.print(" Agree  Reject  ");
+		endInt();
+		while(true)
+		{
+			if(isPress(StartKey, LOW))
+			{
+				draw(false);
+				break;
+			}
+			if(isPress(EndKey, LOW))
+			{
+				Lcd.setCursor(0, 1);
+				Lcd.print(" You Rejected.");
+				drawCnt = 0;
+				delay(1000);
+				startInt();
+				break;
+			}
+		}
 	}
 	return false;
+}
+
+void callDraw()
+{
+	if(isPress(StartKey,LOW))
+	{
+		draw(false);
+	}
+}
+
+void callResign()
+{
+	if (isPress(EndKey, LOW))
+	{
+		resign(false);
+	}
 }
 
 bool resign(bool flag)
 {
+	static bool saveFlag;
 	++resignCnt;
 	if (resignCnt >= 2)
 	{// 双方同意认输
 		resignCnt = 0;
-		// todo: 显示屏显示和棋信息
+		if(saveFlag == false)
+		{
+			end(Lose);
+		}
+		else
+		{
+			end(Win);
+		}
 		return true;
 	}
 	if (flag == false)
 	{// 人认输
-		sendBoard(2);
+		sendBoard(board.board,Resign);
 	}
 	else
-	{// 引擎提和
-		// todo: 显示屏显示和棋信息
+	{// 引擎认输
+		Lcd.clear();
+		Lcd.setCursor(0, 0);
+		Lcd.print("Computer resign.");
+		Lcd.setCursor(0, 1);
+		Lcd.print("CONGRATUALTIONS!");
+		delay(1000);
+		end(Win);
 	}
+	saveFlag = flag;
 	return false;
 }
 
 void moveChess(char order[4])
+{
+}
+
+void moveChess(String order)
 {
 }
 
@@ -303,25 +381,73 @@ void selectOrder()
 
 void start()
 {
+	startInt();
 }
 
-void play()
+void playing()
 {
-	if (humanMoveChess())
+	while(true)
 	{
-		sendBoard();
-		delay(500);
-		tmp = readOrderFromHost();
-		executeOrder(tmp);
+		if (humanMoveChess())
+		{
+			sendBoard(board.board);
+			delay(500);
+			tmp = readOrderFromHost();
+			executeOrder(tmp);
+		}
+		if (comSer.available())
+		{
+			tmp = readOrderFromHost();
+			executeOrder(tmp);
+		}
+		delay(100);
 	}
-	if (comSer.available())
-	{
-		tmp = readOrderFromHost();
-		executeOrder(tmp);
-	}
-	delay(100);
 }
 
 void reset()
 {
+}
+
+void end(GameState state)
+{
+	Lcd.clear();
+	Lcd.setCursor(0, 0);
+	endInt();
+	// 显示提示信息
+	switch(state)
+	{
+	case Draw:
+		Lcd.print("Game End!Draw!");
+		break;
+	case Win:
+		Lcd.print("You Win!");
+		break;
+	case Lose:
+		Lcd.print("You lose!");
+		break;
+	default:
+		break;
+	}
+	Lcd.setCursor(0, 1);
+	Lcd.print("Play again?");
+	while(true)
+	{
+		if(isPress(StartKey,LOW))
+		{
+			reset();
+			break;
+		}
+	}
+}
+
+void startInt()
+{
+	attachInterrupt(0, callDraw, LOW);
+	attachInterrupt(1, callResign, LOW);
+}
+
+void endInt()
+{
+	detachInterrupt(0);
+	detachInterrupt(1);
 }

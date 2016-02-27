@@ -13,7 +13,7 @@ String readOrderFromHost();
 // 发送go（思考）命令。state:0 正常，1 求和，2 认输
 void sendGo(uchr state = 0);
 // 发送棋盘描述。state:0 正常，1 求和，2 认输
-void sendBoard(uchr state = 0);
+void sendBoard(char board[BoardRow][BoardCol], GameState state = Play);
 // 检测按键是否按下，默认检测高电平
 bool isPress(uint8_t pin, uint8_t state = HIGH);
 // 初始化串口
@@ -24,4 +24,5 @@ void initBoard();
 void initLCD();
 // 初始化GPIO Pin
 void initPin();
+
 #endif // __SLAVE_MAIN_H__

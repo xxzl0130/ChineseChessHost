@@ -88,7 +88,7 @@ void sendGo(uchr state)
 	comSer.print('\n');
 }
 
-void sendBoard(uchr state)
+void sendBoard(char board[BoardRow][BoardCol], GameState state)
 {
 	creatFEN(board, buf, AIColor, ++roundCnt);
 	comSer.println(buf);

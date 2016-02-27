@@ -67,6 +67,10 @@ private:
 	uchr rowStart, rowEnd;
 	// 列起始、结束针脚
 	uchr colStart, colEnd;
+	/*
+	以及其他所需要的信息
+	*/
+public:
 	// 棋盘
 	char board[BoardRow][BoardCol] = {
 		{ r,h,e,a,k,a,e,h,r },// 9
@@ -79,12 +83,8 @@ private:
 		{ b,C,b,b,b,b,b,C,b },// 2
 		{ b,b,b,b,b,b,b,b,b },// 1
 		{ R,H,E,A,K,A,E,H,R } // 0
-	//    a b c d e f g h i
+							  //    a b c d e f g h i
 	};
-	/*
-	以及其他所需要的信息
-	*/
-public:
 	/*
 	构造函数，视情况添加所需参数
 	*/
