@@ -2,6 +2,7 @@
 #define __CHESS_BOARD_H__
 
 #include <Arduino.h>
+#include "SlipTable.h"
 
 /*
 棋子描述、棋盘表示等相关规范见：
@@ -67,6 +68,8 @@ private:
 	uchr rowStart, rowEnd;
 	// 列起始、结束针脚
 	uchr colStart, colEnd;
+	// 滑台
+	SlipTable table;
 	/*
 	以及其他所需要的信息
 	*/
@@ -94,6 +97,8 @@ public:
 	返回值为象棋引擎标准的4字符形式，例如a2a5
 	*/
 	String getMove();
+	void moveChess(char order[4]);
+	void moveChess(String order);
 };
 
 #endif // __CHESS_BOARD_H__

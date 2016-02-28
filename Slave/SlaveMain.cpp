@@ -110,18 +110,34 @@ bool isPress(uint8_t pin, uint8_t state)
 
 bool initSerial()
 {
+	// 初始化与Host通信
 	comSer.begin(baudRate);
 	if (!comSer)
 		return false;
-	for (uchr i = 0; i < 5; ++i)
+	for (uchr i = 0; i < 3; ++i)
 	{
 		tmp = comSer.readString();
-		//comSer.println(tmp);
 		if (strstr(tmp.c_str(), testComHost) != NULL)
 		{ // 找到应有字符串，表示连接成功
 			comSer.println(testComSlave); // 回复
 			Lcd.setCursor(0, 1);
 			Lcd.print("SERIAL OK!");
+			break;
+		}
+		delay(100);
+	}
+	// 初始化与Slave2通信
+	Serial2.begin(baudRate);
+	if (!Serial2)
+		return false;
+	Serial.println(testComHost);
+	for (uchr i = 0; i < 3; ++i)
+	{
+		tmp = comSer.readString();
+		if (strstr(tmp.c_str(), testComSlave) != NULL)
+		{ // 找到应有字符串，表示连接成功
+			Lcd.setCursor(0, 1);
+			Lcd.print("SERIAL2 OK!");
 			return true;
 		}
 		delay(100);
@@ -146,10 +162,6 @@ void initLCD()
 
 void initPin()
 {
-	pinMode(StartKey, INPUT_PULLUP);
-	pinMode(EndKey, INPUT_PULLUP);
-	pinMode(LeftKey, INPUT_PULLUP);
-	pinMode(RightKey, INPUT_PULLUP);
 	pinMode(ledPin, OUTPUT);
 	digitalWrite(13, LOW);
 }
