@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "StepperMotor.h"
+#include "CommonDef.h"
 
 #ifndef uchr
 #define uchr unsigned char

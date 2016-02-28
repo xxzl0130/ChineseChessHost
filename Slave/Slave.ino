@@ -4,7 +4,6 @@
 #include "CommonDef.h"
 #include "SlaveDef.h"
 #include "StepperMotor.h"
-#include "SlaveMain.h"
 #include "MatrixKeyboard.h"
 #include "ChessBoard.h"
 #include "SlipTable.h"
@@ -33,7 +32,20 @@ LiquidCrystal_I2C Lcd(0x27, 16, 2);
 1*                *0xC0
  ******************
 */
-
+// 棋盘
+char board[BoardRow][BoardCol] = {
+	{ r,h,e,a,k,a,e,h,r },// 9
+	{ b,b,b,b,b,b,b,b,b },// 8
+	{ b,c,b,b,b,b,b,c,b },// 7
+	{ p,b,p,b,p,b,p,b,p },// 6
+	{ b,b,b,b,b,b,b,b,b },// 5
+	{ b,b,b,b,b,b,b,b,b },// 4
+	{ P,b,P,b,P,b,P,b,P },// 3
+	{ b,C,b,b,b,b,b,C,b },// 2
+	{ b,b,b,b,b,b,b,b,b },// 1
+	{ R,H,E,A,K,A,E,H,R } // 0
+//    a b c d e f g h i
+};
 String tmp;
 char buf[MAX_BUF_SIZE];
 // 对局回合数
@@ -49,7 +61,7 @@ DIFFICULTY diff = easy;
 // 游戏状态 0 正常，1 求和，2 认输
 GameState state = Play;
 // 棋盘
-ChessBoard board;
+ChessBoard chessBoard;
 
 // 检测人移动棋子
 bool humanMoveChess();
@@ -77,6 +89,26 @@ void playing();
 void reset();
 // 结束游戏
 void end(GameState state);
+// 将局面变成FEN规范中的描述
+void boardDescribe(char board[BoardRow][BoardCol], char* buf, uchr& len);
+// 生成FEN格式串
+void creatFEN(char board[BoardRow][BoardCol], char* buf, char turn, ulong round);
+// 从主机接收命令
+String readOrderFromHost();
+// 发送go（思考）命令。state:0 正常，1 求和，2 认输
+void sendGo(uchr state = 0);
+// 发送棋盘描述。state:0 正常，1 求和，2 认输
+void sendBoard(char board[BoardRow][BoardCol], GameState state = Play);
+// 检测按键是否按下，默认检测高电平
+bool isPress(uint8_t pin, uint8_t state = HIGH);
+// 初始化串口
+bool initSerial();
+// 初始化棋盘，设置难度、先手等
+void initBoard();
+// 初始化LCD
+void initLCD();
+// 初始化GPIO Pin
+void initPin();
 
 void setup()
 {
@@ -133,7 +165,7 @@ void executeOrder(String& order)
 		move[i] = ptr[i];
 	}
 	// 走子
-	board.moveChess(move);
+	chessBoard.moveChess(move);
 }
 
 bool draw(bool flag)
@@ -147,7 +179,7 @@ bool draw(bool flag)
 	}
 	if (flag == false)
 	{// 人提和
-		sendBoard(board.board,Draw);
+		sendBoard(board,Draw);
 	}
 	else
 	{// 引擎提和
@@ -160,7 +192,7 @@ bool draw(bool flag)
 		{
 			if(Serial2.available())
 			{
-				auto t = Serial.read();
+				int t = Serial.read();
 				if(t == StartKey)
 				{
 					draw(false);
@@ -215,7 +247,7 @@ bool resign(bool flag)
 	}
 	if (flag == false)
 	{// 人认输
-		sendBoard(board.board,Resign);
+		sendBoard(board,Resign);
 	}
 	else
 	{// 引擎认输
@@ -243,7 +275,7 @@ void waitStart()
 	{
 		if(Serial2.available())
 		{
-			auto t = Serial2.read();
+			int t = Serial2.read();
 			if(t == StartKey)
 			{
 				break;
@@ -266,7 +298,7 @@ void selectDiff()
 	{
 		if (Serial2.available())
 		{
-			auto t = Serial2.read();
+			int t = Serial2.read();
 			if (t == StartKey)
 			{
 				// 难度选择完成
@@ -296,7 +328,7 @@ void selectDiff()
 					break;
 				}
 			}
-			if (t == RightKey, LOW)
+			if (t == RightKey)
 			{
 				switch (diff)
 				{
@@ -337,7 +369,7 @@ void selectOrder()
 	{
 		if (Serial2.available())
 		{
-			auto t = Serial2.read();
+			int t = Serial2.read();
 			if (t == StartKey)
 			{
 				// 先后手选择完成
@@ -391,7 +423,7 @@ void playing()
 	{
 		if (humanMoveChess())
 		{
-			sendBoard(board.board);
+			sendBoard(board);
 			delay(500);
 			tmp = readOrderFromHost();
 			executeOrder(tmp);
@@ -434,12 +466,177 @@ void end(GameState state)
 	{
 		if (Serial2.available())
 		{
-			auto t = Serial2.read();
-			if (t == StartKey, LOW)
+			int t = Serial2.read();
+			if (t == StartKey)
 			{
 				reset();
 				break;
 			}
 		}
 	}
+}
+
+void boardDescribe(char board[BoardRow][BoardCol], char* buf, uchr& len)
+{
+	len = 0;
+	for (uchr i = 0; i < BoardRow; ++i)
+	{
+		uchr cnt = 0;
+		for (uchr j = 0; j < BoardCol; ++j)
+		{
+			if (board[i][j] == b)
+			{// 该位置没有子，增加计数
+				++cnt;
+			}
+			else
+			{// 计数不为0，先将计数加入
+				if (cnt != 0)
+				{
+					// cnt不会大于10
+					buf[len++] = '0' + cnt;
+					cnt = 0;
+				}
+				buf[len++] = board[i][j];
+			}
+		}
+		if (cnt != 0)
+		{
+			// cnt不会大于10
+			buf[len++] = '0' + cnt;
+			cnt = 0;
+		}
+		if (i != BoardRow - 1)
+		{
+			buf[len++] = '/';
+		}
+	}
+}
+
+void creatFEN(char board[BoardRow][BoardCol], char* buf, char turn, ulong round)
+{
+	uchr len;
+
+	boardDescribe(board, buf, len);
+	// 该谁下
+	buf[len++] = ' ';
+	buf[len++] = turn;
+	// 不变的参数
+	buf[len++] = ' ';
+	buf[len++] = '-';
+	buf[len++] = ' ';
+	buf[len++] = '-';
+	buf[len++] = ' ';
+	buf[len++] = '0';
+	buf[len++] = ' ';
+	// 局数
+	sprintf(buf + len, "%lu", round);
+}
+
+String readOrderFromHost()
+{
+	while (true)
+	{
+		if (comSer.available())
+		{
+			String tmp = comSer.readString();
+			if (strstr(tmp.c_str(), "bestmove") != NULL)
+			{ // 找到bestmove
+				return tmp;
+			}
+		}
+		delay(100);
+	}
+}
+
+void sendGo(uchr state)
+{
+	comSer.print("go depth ");
+	comSer.print(diff);
+	if (state == 1)
+	{// 提和
+		comSer.print(" draw");
+	}
+	else if (state == 2)
+	{
+		comSer.print(" resign");
+	}
+	comSer.print('\n');
+}
+
+void sendBoard(char board[BoardRow][BoardCol], GameState state)
+{
+	creatFEN(board, buf, AIColor, ++roundCnt);
+	comSer.println(buf);
+	sendGo(state);
+}
+bool isPress(uint8_t pin, uint8_t state)
+{
+	if (digitalRead(pin) == state)
+	{
+		// 延时消除抖动
+		delay(10);
+		if (digitalRead(pin) == state)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool initSerial()
+{
+	// 初始化与Host通信
+	comSer.begin(generalBaudRate);
+	if (!comSer)
+		return false;
+	for (uchr i = 0; i < 3; ++i)
+	{
+		tmp = comSer.readString();
+		if (strstr(tmp.c_str(), testComHost) != NULL)
+		{ // 找到应有字符串，表示连接成功
+			comSer.println(testComSlave); // 回复
+			Lcd.setCursor(0, 1);
+			Lcd.print("SERIAL OK!");
+			break;
+		}
+		delay(100);
+	}
+	// 初始化与Slave2通信
+	Serial2.begin(generalBaudRate);
+	if (!Serial2)
+		return false;
+	Serial.println(testComHost);
+	for (uchr i = 0; i < 3; ++i)
+	{
+		tmp = comSer.readString();
+		if (strstr(tmp.c_str(), testComSlave) != NULL)
+		{ // 找到应有字符串，表示连接成功
+			Lcd.setCursor(0, 1);
+			Lcd.print("SERIAL2 OK!");
+			return true;
+		}
+		delay(100);
+	}
+	return false;
+}
+
+void initBoard()
+{
+	Lcd.setCursor(0, 1);
+	Lcd.print("BOARD OK!");
+}
+
+void initLCD()
+{
+	Lcd.init();
+	Lcd.backlight();//开启背光
+	Lcd.noBlink();//无光标
+	Lcd.setCursor(1, 0);
+	Lcd.print("SYSTEM INIT");
+}
+
+void initPin()
+{
+	pinMode(ledPin, OUTPUT);
+	digitalWrite(13, LOW);
 }

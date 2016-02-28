@@ -1,4 +1,5 @@
 #include "../slave/CommonDef.h"
+#include <string.h>
 
 // 开始/求和按键 int.0
 #define StartKey	2
@@ -19,7 +20,7 @@ bool initSerial();
 void setup()
 {
 	initPin();
-	Serial.begin(baudRate);
+	Serial.begin(generalBaudRate);
 }
 
 // 循环检测按键，向Slave发送
@@ -68,7 +69,7 @@ bool isPress(uint8_t pin, uint8_t state)
 bool initSerial()
 {
 	String tmp;
-	Serial.begin(baudRate);
+	Serial.begin(generalBaudRate);
 	if (!Serial)
 		return false;
 	for (uchr i = 0; i < 5; ++i)

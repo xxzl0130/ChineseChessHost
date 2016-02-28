@@ -5,10 +5,6 @@
 
 // 缓冲区最大大小(1KB)
 #define MAX_BUF_SIZE (1 * 1024)
-// 棋盘行数
-#define BoardRow 10
-// 棋盘列数
-#define BoardCol 9
 
 // LED针脚
 #define ledPin 13

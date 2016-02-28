@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "SlipTable.h"
+#include "CommonDef.h"
 
 /*
 棋子描述、棋盘表示等相关规范见：
@@ -74,20 +75,6 @@ private:
 	以及其他所需要的信息
 	*/
 public:
-	// 棋盘
-	char board[BoardRow][BoardCol] = {
-		{ r,h,e,a,k,a,e,h,r },// 9
-		{ b,b,b,b,b,b,b,b,b },// 8
-		{ b,c,b,b,b,b,b,c,b },// 7
-		{ p,b,p,b,p,b,p,b,p },// 6
-		{ b,b,b,b,b,b,b,b,b },// 5
-		{ b,b,b,b,b,b,b,b,b },// 4
-		{ P,b,P,b,P,b,P,b,P },// 3
-		{ b,C,b,b,b,b,b,C,b },// 2
-		{ b,b,b,b,b,b,b,b,b },// 1
-		{ R,H,E,A,K,A,E,H,R } // 0
-							  //    a b c d e f g h i
-	};
 	/*
 	构造函数，视情况添加所需参数
 	*/
