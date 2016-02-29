@@ -18,6 +18,15 @@
 // 右按键 上拉
 #define RightKey	5
 
+// 棋盘行引脚起始口
+#define RowStart	22
+// 棋盘行数
+#define RowCnt		10
+// 棋盘列引脚起始口
+#define ColStart	32
+// 棋盘行列数
+#define ColCnt		40
+
 #ifdef DEBUG
 // 测试使用的串口
 #define comSer Serial

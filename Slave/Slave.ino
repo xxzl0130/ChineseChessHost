@@ -32,20 +32,37 @@ LiquidCrystal_I2C Lcd(0x27, 16, 2);
 1*                *0xC0
  ******************
 */
-// 棋盘
-char board[BoardRow][BoardCol] = {
-	{r,h,e,a,k,a,e,h,r},// 9
-	{b,b,b,b,b,b,b,b,b},// 8
-	{b,c,b,b,b,b,b,c,b},// 7
-	{p,b,p,b,p,b,p,b,p},// 6
-	{b,b,b,b,b,b,b,b,b},// 5
-	{b,b,b,b,b,b,b,b,b},// 4
-	{P,b,P,b,P,b,P,b,P},// 3
-	{b,C,b,b,b,b,b,C,b},// 2
-	{b,b,b,b,b,b,b,b,b},// 1
-	{R,H,E,A,K,A,E,H,R} // 0
-	//    a b c d e f g h i
+// 棋盘描述，2层，保存上一次扫描的状态
+char board[2][BoardRow][BoardCol] = {
+	{
+	{ r,h,e,a,k,a,e,h,r },// 9
+	{ b,b,b,b,b,b,b,b,b },// 8
+	{ b,c,b,b,b,b,b,c,b },// 7
+	{ p,b,p,b,p,b,p,b,p },// 6
+	{ b,b,b,b,b,b,b,b,b },// 5
+	{ b,b,b,b,b,b,b,b,b },// 4
+	{ P,b,P,b,P,b,P,b,P },// 3
+	{ b,C,b,b,b,b,b,C,b },// 2
+	{ b,b,b,b,b,b,b,b,b },// 1
+	{ R,H,E,A,K,A,E,H,R } // 0
+//    a b c d e f g h i
+	},
+	{
+	{ r,h,e,a,k,a,e,h,r },// 9
+	{ b,b,b,b,b,b,b,b,b },// 8
+	{ b,c,b,b,b,b,b,c,b },// 7
+	{ p,b,p,b,p,b,p,b,p },// 6
+	{ b,b,b,b,b,b,b,b,b },// 5
+	{ b,b,b,b,b,b,b,b,b },// 4
+	{ P,b,P,b,P,b,P,b,P },// 3
+	{ b,C,b,b,b,b,b,C,b },// 2
+	{ b,b,b,b,b,b,b,b,b },// 1
+	{ R,H,E,A,K,A,E,H,R } // 0
+//   a b c d e f g h i
+	}
 };
+// 当前使用的棋盘描述
+uchr curBoardNo = 0;
 String tmp;
 char buf[MAX_BUF_SIZE];
 // 对局回合数
@@ -124,6 +141,19 @@ void loop()
 
 bool humanMoveChess()
 {
+	for (auto i = 0; i <= RowCnt;++i)
+	{
+		digitalWrite(RowStart + i, HIGH);
+		for (auto j = 0; j <= ColCnt;++j)
+		{
+			if (static_cast<bool>(digitalRead(ColStart + j) == HIGH) !=
+			    static_cast<bool>(board[curBoardNo][i][j] != b) &&
+				isPress(ColStart + j))
+			{
+				// 有子拿起或落下
+			}
+		}
+	}
 	return true;
 }
 
@@ -175,7 +205,7 @@ bool draw(bool flag)
 	}
 	if (flag == false)
 	{// 人提和
-		sendBoard(board, Draw);
+		sendBoard(board[curBoardNo], Draw);
 	}
 	else
 	{// 引擎提和
@@ -223,7 +253,7 @@ bool resign(bool flag)
 	}
 	if (flag == false)
 	{// 人认输
-		sendBoard(board, Resign);
+		sendBoard(board[curBoardNo], Resign);
 	}
 	else
 	{// 引擎认输
@@ -394,7 +424,7 @@ void playing()
 		}
 		if (humanMoveChess())
 		{
-			sendBoard(board);
+			sendBoard(board[curBoardNo]);
 			delay(500);
 			tmp = readOrderFromHost();
 			executeOrder(tmp);
@@ -616,4 +646,12 @@ void initPin()
 	pinMode(EndKey, INPUT_PULLUP);
 	pinMode(LeftKey, INPUT_PULLUP);
 	pinMode(RightKey, INPUT_PULLUP);
+	for (auto i = 0; i <= RowCnt; ++i)
+	{
+		pinMode(RowStart + i, OUTPUT);
+	}
+	for (auto i = 0; i <= ColCnt;++i)
+	{
+		pinMode(ColStart + i, INPUT);
+	}
 }
