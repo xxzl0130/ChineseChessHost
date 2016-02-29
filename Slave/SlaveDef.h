@@ -35,13 +35,24 @@
 #define comSer Serial1
 #endif // DEBUG
 
+// 游戏状态
 enum GameState
 {
 	Play = 0,
 	Draw,
 	Resign,
 	Win,
-	Lose
+	Lose,
+	// 玩家拿着自己的子
+	PlayerHoldHis,
+	// 玩家拿着电脑的子
+	PlayerHoldOpp,
+	// 玩家拿着两个棋子
+	PlayerHoldTwo,
+	// 走子完成
+	MoveDone,
+	// 等待引擎指令
+	WaitOrder
 };
 
 #endif // __SLAVE_DEF_H__

@@ -7,11 +7,11 @@
 #include "MatrixKeyboard.h"
 #include "ChessBoard.h"
 #include "SlipTable.h"
+#include "ctype.h"
 /*
 Todo list:
 
-###调整求和、认输逻辑
-###中断中无法使用串口
+## 检测棋子的函数
 
 // 开始
 void start();
@@ -68,15 +68,15 @@ char buf[MAX_BUF_SIZE];
 // 对局回合数
 ulong roundCnt;
 // 电脑执子
-char AIColor = 'b';
+char AIColor = 'b', AIColorNumber = 'z';
 // 提和计数
 uchr drawCnt;
 // 认输计数
 uchr resignCnt;
 // 难度
 DIFFICULTY diff = easy;
-// 游戏状态 0 正常，1 求和，2 认输
-GameState state = Play;
+// 游戏状态
+GameState gameState = Play;
 // 棋盘
 ChessBoard chessBoard;
 
@@ -101,7 +101,7 @@ void playing();
 // 重置棋盘
 void reset();
 // 结束游戏
-void end(GameState state);
+void gameOver(GameState state);
 // 将局面变成FEN规范中的描述
 void boardDescribe(char board[BoardRow][BoardCol], char* buf, uchr& len);
 // 生成FEN格式串
@@ -151,10 +151,11 @@ bool humanMoveChess()
 				isPress(ColStart + j))
 			{
 				// 有子拿起或落下
+
 			}
 		}
 	}
-	return true;
+	return false;
 }
 
 void executeOrder(String& order)
@@ -200,7 +201,7 @@ bool draw(bool flag)
 	if (drawCnt >= 2)
 	{// 双方同意和棋
 		drawCnt = 0;
-		end(Draw);
+		gameOver(Draw);
 		return true;
 	}
 	if (flag == false)
@@ -216,11 +217,14 @@ bool draw(bool flag)
 		Lcd.print(" Agree  Reject  ");
 		while (true)
 		{
+			// 同意和棋
 			if (isPress(StartKey, LOW))
 			{
+				// 相当于人也提出和棋，递归运行
 				draw(false);
 				break;
 			}
+			// 拒绝和棋
 			else if (isPress(EndKey, LOW))
 			{
 				Lcd.setCursor(0, 1);
@@ -236,6 +240,7 @@ bool draw(bool flag)
 
 bool resign(bool flag)
 {
+	// 记录认输是由谁提出的
 	static bool saveFlag;
 	++resignCnt;
 	if (resignCnt >= 2)
@@ -243,11 +248,11 @@ bool resign(bool flag)
 		resignCnt = 0;
 		if (saveFlag == false)
 		{
-			end(Lose);
+			gameOver(Lose);
 		}
 		else
 		{
-			end(Win);
+			gameOver(Win);
 		}
 		return true;
 	}
@@ -263,7 +268,7 @@ bool resign(bool flag)
 		Lcd.setCursor(0, 1);
 		Lcd.print("CONGRATUALTIONS!");
 		delay(1000);
-		end(Win);
+		gameOver(Win);
 	}
 	saveFlag = flag;
 	return false;
@@ -303,11 +308,15 @@ void selectDiff()
 			// 难度选择完成
 			break;
 		}
+		// 按左降低难度
 		if (isPress(LeftKey, LOW))
 		{
 			switch (diff)
 			{
 			case easy:
+			// easy已无法降低
+				Lcd.setCursor(0, 0);
+				Lcd.print(" >Easy< Normal ");
 				diff = easy;
 				break;
 			case normal:
@@ -318,6 +327,8 @@ void selectDiff()
 			case hard:
 				Lcd.setCursor(0, 0);
 				Lcd.print("  Easy >Normal<");
+				Lcd.setCursor(0, 1);
+				Lcd.print("  Hard  Master ");
 				diff = normal;
 				break;
 			case master:
@@ -327,6 +338,7 @@ void selectDiff()
 				break;
 			}
 		}
+		// 按右键提高难度
 		if (isPress(RightKey, LOW))
 		{
 			switch (diff)
@@ -337,6 +349,8 @@ void selectDiff()
 				diff = normal;
 				break;
 			case normal:
+				Lcd.setCursor(0, 0);
+				Lcd.print("  Easy  Normal ");
 				Lcd.setCursor(0, 1);
 				Lcd.print(" >Hard< Master ");
 				diff = hard;
@@ -347,6 +361,7 @@ void selectDiff()
 				diff = master;
 				break;
 			case master:
+			// master已无法提高难度
 				diff = master;
 				break;
 			}
@@ -374,15 +389,21 @@ void selectOrder()
 			switch (AIColor)
 			{
 			case 'b':
+			// 默认电脑执黑棋
 				AIColor = 'b';
+				AIColorNumber = 'z';
 				break;
 			case 'r':
+			// 切换到黑棋
 				Lcd.setCursor(0, 1);
 				Lcd.print("  >Red<  Black  ");
+				// 玩家执红电脑执黑
 				AIColor = 'b';
+				AIColorNumber = 'z';
 				break;
 			default:
 				AIColor = 'b';
+				AIColorNumber = 'z';
 				break;
 			}
 		}
@@ -393,13 +414,17 @@ void selectOrder()
 			case 'b':
 				Lcd.setCursor(0, 1);
 				Lcd.print("   Red  >Black< ");
+				// 玩家执黑电脑执红
 				AIColor = 'r';
+				AIColorNumber = 'Z';
 				break;
 			case 'r':
 				AIColor = 'b';
+				AIColorNumber = 'z';
 				break;
 			default:
 				AIColor = 'r';
+				AIColorNumber = 'Z';
 				break;
 			}
 		}
@@ -414,14 +439,40 @@ void playing()
 {
 	while (true)
 	{
+		// 求和
 		if(isPress(StartKey,LOW))
 		{
 			draw(false);
 		}
+		// 认输
 		if(isPress(EndKey,LOW))
 		{
 			resign(false);
 		}
+		switch(gameState)
+		{
+			/*
+			先列好各种情况，等待完善
+			*/
+		case Play:
+			break;
+		case PlayerHoldHis:
+			break;
+		case PlayerHoldOpp:
+			break;
+		case PlayerHoldTwo:
+			break;
+		case MoveDone:
+			break;
+		case WaitOrder:
+			break;
+		case Win:case Lose:case Draw:case Resign:
+			// 这4个状态是已经进入gameOver的，所以结束本函数
+			return;
+		default:
+			break;
+		}
+		/*
 		if (humanMoveChess())
 		{
 			sendBoard(board[curBoardNo]);
@@ -435,6 +486,7 @@ void playing()
 			executeOrder(tmp);
 		}
 		delay(100);
+		*/
 	}
 }
 
@@ -442,10 +494,11 @@ void reset()
 {
 }
 
-void end(GameState state)
+void gameOver(GameState state)
 {
 	Lcd.clear();
 	Lcd.setCursor(0, 0);
+	gameState = state;
 	// 显示提示信息
 	switch (state)
 	{
@@ -504,7 +557,6 @@ void boardDescribe(char board[BoardRow][BoardCol], char* buf, uchr& len)
 		{
 			// cnt不会大于10
 			buf[len++] = '0' + cnt;
-			cnt = 0;
 		}
 		if (i != BoardRow - 1)
 		{
