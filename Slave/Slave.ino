@@ -34,17 +34,17 @@ LiquidCrystal_I2C Lcd(0x27, 16, 2);
 */
 // 棋盘
 char board[BoardRow][BoardCol] = {
-	{ r,h,e,a,k,a,e,h,r },// 9
-	{ b,b,b,b,b,b,b,b,b },// 8
-	{ b,c,b,b,b,b,b,c,b },// 7
-	{ p,b,p,b,p,b,p,b,p },// 6
-	{ b,b,b,b,b,b,b,b,b },// 5
-	{ b,b,b,b,b,b,b,b,b },// 4
-	{ P,b,P,b,P,b,P,b,P },// 3
-	{ b,C,b,b,b,b,b,C,b },// 2
-	{ b,b,b,b,b,b,b,b,b },// 1
-	{ R,H,E,A,K,A,E,H,R } // 0
-//    a b c d e f g h i
+	{r,h,e,a,k,a,e,h,r},// 9
+	{b,b,b,b,b,b,b,b,b},// 8
+	{b,c,b,b,b,b,b,c,b},// 7
+	{p,b,p,b,p,b,p,b,p},// 6
+	{b,b,b,b,b,b,b,b,b},// 5
+	{b,b,b,b,b,b,b,b,b},// 4
+	{P,b,P,b,P,b,P,b,P},// 3
+	{b,C,b,b,b,b,b,C,b},// 2
+	{b,b,b,b,b,b,b,b,b},// 1
+	{R,H,E,A,K,A,E,H,R} // 0
+	//    a b c d e f g h i
 };
 String tmp;
 char buf[MAX_BUF_SIZE];
@@ -69,10 +69,6 @@ bool humanMoveChess();
 void executeOrder(String& order);
 // 求和 flag:false 人 true 机
 bool draw(bool flag);
-// 中断用函数 调用draw
-void callDraw();
-// 中断用函数 调用resign
-void callResign();
 // 认输 flag:false 人 true 机
 bool resign(bool flag);
 // 等待开始
@@ -179,7 +175,7 @@ bool draw(bool flag)
 	}
 	if (flag == false)
 	{// 人提和
-		sendBoard(board,Draw);
+		sendBoard(board, Draw);
 	}
 	else
 	{// 引擎提和
@@ -188,44 +184,24 @@ bool draw(bool flag)
 		Lcd.print("Computer draw.");
 		Lcd.setCursor(0, 1);
 		Lcd.print(" Agree  Reject  ");
-		while(true)
+		while (true)
 		{
-			if(Serial2.available())
+			if (isPress(StartKey, LOW))
 			{
-				int t = Serial.read();
-				if(t == StartKey)
-				{
-					draw(false);
-					break;
-				}
-				else if(t == EndKey)
-				{
-					Lcd.setCursor(0, 1);
-					Lcd.print(" You Rejected.");
-					drawCnt = 0;
-					delay(1000);
-					break;
-				}
+				draw(false);
+				break;
+			}
+			else if (isPress(EndKey, LOW))
+			{
+				Lcd.setCursor(0, 1);
+				Lcd.print(" You Rejected.");
+				drawCnt = 0;
+				delay(1000);
+				break;
 			}
 		}
 	}
 	return false;
-}
-
-void callDraw()
-{
-	if(isPress(StartKey,LOW))
-	{
-		draw(false);
-	}
-}
-
-void callResign()
-{
-	if (isPress(EndKey, LOW))
-	{
-		resign(false);
-	}
 }
 
 bool resign(bool flag)
@@ -235,7 +211,7 @@ bool resign(bool flag)
 	if (resignCnt >= 2)
 	{// 双方同意认输
 		resignCnt = 0;
-		if(saveFlag == false)
+		if (saveFlag == false)
 		{
 			end(Lose);
 		}
@@ -247,7 +223,7 @@ bool resign(bool flag)
 	}
 	if (flag == false)
 	{// 人认输
-		sendBoard(board,Resign);
+		sendBoard(board, Resign);
 	}
 	else
 	{// 引擎认输
@@ -273,13 +249,9 @@ void waitStart()
 	// 等待按下开始按钮
 	while (true)
 	{
-		if(Serial2.available())
+		if (isPress(StartKey, LOW))
 		{
-			int t = Serial2.read();
-			if(t == StartKey)
-			{
-				break;
-			}
+			break;
 		}
 	}
 	selectDiff();
@@ -296,64 +268,59 @@ void selectDiff()
 	Lcd.print("  Hard  Master");
 	while (true)
 	{
-		if (Serial2.available())
+		if (isPress(StartKey, LOW))
 		{
-			int t = Serial2.read();
-			if (t == StartKey)
+			// 难度选择完成
+			break;
+		}
+		if (isPress(LeftKey, LOW))
+		{
+			switch (diff)
 			{
-				// 难度选择完成
+			case easy:
+				diff = easy;
+				break;
+			case normal:
+				Lcd.setCursor(0, 0);
+				Lcd.print(" >Easy< Normal ");
+				diff = easy;
+				break;
+			case hard:
+				Lcd.setCursor(0, 0);
+				Lcd.print("  Easy >Normal<");
+				diff = normal;
+				break;
+			case master:
+				Lcd.setCursor(0, 1);
+				Lcd.print(" >Hard< Master ");
+				diff = hard;
 				break;
 			}
-			if (t == LeftKey)
+		}
+		if (isPress(RightKey, LOW))
+		{
+			switch (diff)
 			{
-				switch (diff)
-				{
-				case easy:
-					diff = easy;
-					break;
-				case normal:
-					Lcd.setCursor(0, 0);
-					Lcd.print(" >Easy< Normal ");
-					diff = easy;
-					break;
-				case hard:
-					Lcd.setCursor(0, 0);
-					Lcd.print("  Easy >Normal<");
-					diff = normal;
-					break;
-				case master:
-					Lcd.setCursor(0, 1);
-					Lcd.print(" >Hard< Master ");
-					diff = hard;
-					break;
-				}
-			}
-			if (t == RightKey)
-			{
-				switch (diff)
-				{
-				case easy:
-					Lcd.setCursor(0, 0);
-					Lcd.print("  Easy >Normal<");
-					diff = normal;
-					break;
-				case normal:
-					Lcd.setCursor(0, 1);
-					Lcd.print(" >Hard< Master ");
-					diff = hard;
-					break;
-				case hard:
-					Lcd.setCursor(0, 1);
-					Lcd.print("  Hard >Master<");
-					diff = master;
-					break;
-				case master:
-					diff = master;
-					break;
-				}
+			case easy:
+				Lcd.setCursor(0, 0);
+				Lcd.print("  Easy >Normal<");
+				diff = normal;
+				break;
+			case normal:
+				Lcd.setCursor(0, 1);
+				Lcd.print(" >Hard< Master ");
+				diff = hard;
+				break;
+			case hard:
+				Lcd.setCursor(0, 1);
+				Lcd.print("  Hard >Master<");
+				diff = master;
+				break;
+			case master:
+				diff = master;
+				break;
 			}
 		}
-		
 	}
 }
 
@@ -367,47 +334,43 @@ void selectOrder()
 	Lcd.print("  >Red<  Black  ");
 	while (true)
 	{
-		if (Serial2.available())
+		if (isPress(StartKey,LOW))
 		{
-			int t = Serial2.read();
-			if (t == StartKey)
+			// 先后手选择完成
+			break;
+		}
+		if (isPress(LeftKey,LOW))
+		{
+			switch (AIColor)
 			{
-				// 先后手选择完成
+			case 'b':
+				AIColor = 'b';
+				break;
+			case 'r':
+				Lcd.setCursor(0, 1);
+				Lcd.print("  >Red<  Black  ");
+				AIColor = 'b';
+				break;
+			default:
+				AIColor = 'b';
 				break;
 			}
-			if (t == LeftKey)
+		}
+		if (isPress(RightKey,LOW))
+		{
+			switch (AIColor)
 			{
-				switch (AIColor)
-				{
-				case 'b':
-					AIColor = 'b';
-					break;
-				case 'r':
-					Lcd.setCursor(0, 1);
-					Lcd.print("  >Red<  Black  ");
-					AIColor = 'b';
-					break;
-				default:
-					AIColor = 'b';
-					break;
-				}
-			}
-			if (t == RightKey)
-			{
-				switch (AIColor)
-				{
-				case 'b':
-					Lcd.setCursor(0, 1);
-					Lcd.print("   Red  >Black< ");
-					AIColor = 'r';
-					break;
-				case 'r':
-					AIColor = 'b';
-					break;
-				default:
-					AIColor = 'r';
-					break;
-				}
+			case 'b':
+				Lcd.setCursor(0, 1);
+				Lcd.print("   Red  >Black< ");
+				AIColor = 'r';
+				break;
+			case 'r':
+				AIColor = 'b';
+				break;
+			default:
+				AIColor = 'r';
+				break;
 			}
 		}
 	}
@@ -419,8 +382,16 @@ void start()
 
 void playing()
 {
-	while(true)
+	while (true)
 	{
+		if(isPress(StartKey,LOW))
+		{
+			draw(false);
+		}
+		if(isPress(EndKey,LOW))
+		{
+			resign(false);
+		}
 		if (humanMoveChess())
 		{
 			sendBoard(board);
@@ -446,7 +417,7 @@ void end(GameState state)
 	Lcd.clear();
 	Lcd.setCursor(0, 0);
 	// 显示提示信息
-	switch(state)
+	switch (state)
 	{
 	case Draw:
 		Lcd.print("Game End!Draw!");
@@ -462,7 +433,7 @@ void end(GameState state)
 	}
 	Lcd.setCursor(0, 1);
 	Lcd.print("Play again?");
-	while(true)
+	while (true)
 	{
 		if (Serial2.available())
 		{
@@ -569,6 +540,7 @@ void sendBoard(char board[BoardRow][BoardCol], GameState state)
 	comSer.println(buf);
 	sendGo(state);
 }
+
 bool isPress(uint8_t pin, uint8_t state)
 {
 	if (digitalRead(pin) == state)
@@ -602,6 +574,7 @@ bool initSerial()
 		delay(100);
 	}
 	// 初始化与Slave2通信
+	/*
 	Serial2.begin(generalBaudRate);
 	if (!Serial2)
 		return false;
@@ -616,7 +589,7 @@ bool initSerial()
 			return true;
 		}
 		delay(100);
-	}
+	}*/
 	return false;
 }
 
@@ -639,4 +612,8 @@ void initPin()
 {
 	pinMode(ledPin, OUTPUT);
 	digitalWrite(13, LOW);
+	pinMode(StartKey, INPUT_PULLUP);
+	pinMode(EndKey, INPUT_PULLUP);
+	pinMode(LeftKey, INPUT_PULLUP);
+	pinMode(RightKey, INPUT_PULLUP);
 }

@@ -9,13 +9,13 @@
 // LED针脚
 #define ledPin 13
 
-// 开始/求和按键 int.0
+// 开始/求和按键 int.0 上拉
 #define StartKey	2
-// 结束/认输按键 int.1
+// 结束/认输按键 int.1 上拉
 #define EndKey		3
-// 左按键
+// 左按键 上拉
 #define LeftKey		4
-// 右按键
+// 右按键 上拉
 #define RightKey	5
 
 #ifdef DEBUG
