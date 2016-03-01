@@ -44,20 +44,21 @@ enum Chess
 	b = '\0'
 };
 
-class chessPoint
+class ChessPoint
 {
 public:
 	char row, col;
-	chessPoint() :row(0), col(0) {}
-	chessPoint(char _r, char _c) :row(_r), col(_c) {}
+	Chess chess;
+	ChessPoint() :row(0), col(0), chess(b) {}
+	ChessPoint(char _r, char _c,Chess _ch) :row(_r), col(_c), chess(_ch) {}
 
-	char* operator - (const chessPoint& p)const
+	char* operator - (const ChessPoint& p)const
 	{
 		static char s[5] = { 0,0,0,0,0 };
-		s[0] = (char)col + 'a';
-		s[1] = (char)row + '0';
-		s[2] = (char)p.col + 'a';
-		s[3] = (char)p.row + '0';
+		s[0] = static_cast<char>(col) + 'a';
+		s[1] = static_cast<char>(row) + '0';
+		s[2] = static_cast<char>(p.col) + 'a';
+		s[3] = static_cast<char>(p.row) + '0';
 		return s;
 	}
 };

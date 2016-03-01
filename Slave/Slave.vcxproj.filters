@@ -30,9 +30,6 @@
     <ClInclude Include="MatrixKeyboard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SlaveMain.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SlipTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -45,9 +42,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MatrixKeyboard.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SlaveMain.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="StepperMotor.cpp">

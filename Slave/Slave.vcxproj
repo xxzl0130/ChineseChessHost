@@ -82,7 +82,6 @@
     <ClInclude Include="ChessBoard.h" />
     <ClInclude Include="CommonDef.h" />
     <ClInclude Include="MatrixKeyboard.h" />
-    <ClInclude Include="SlaveMain.h" />
     <ClInclude Include="SlaveDef.h" />
     <ClInclude Include="SlipTable.h" />
     <ClInclude Include="StepperMotor.h" />
@@ -91,7 +90,6 @@
   <ItemGroup>
     <ClCompile Include="ChessBoard.cpp" />
     <ClCompile Include="MatrixKeyboard.cpp" />
-    <ClCompile Include="SlaveMain.cpp" />
     <ClCompile Include="SlipTable.cpp" />
     <ClCompile Include="StepperMotor.cpp" />
   </ItemGroup>

@@ -58,7 +58,7 @@ void initSerialArg(int argc, char** argv)
 	else if (argc == 2)
 	{// 命令行参数只提供了串口，波特率默认
 		port = string(argv[1]);
-		baud = baudRate;
+		baud = generalBaudRate;
 	}
 	else if (argc >= 3)
 	{// 命令行参数提供了串口和波特率

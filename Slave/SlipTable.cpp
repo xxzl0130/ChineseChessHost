@@ -1,6 +1,6 @@
 #include "SlipTable.h"
 
-SlipTable::SlipTable()
+SlipTable::SlipTable():xAxis(StepperMotor(1,2,3,4,1024)),yAxis(StepperMotor(1, 2, 3, 4, 1024))
 {
 }
 

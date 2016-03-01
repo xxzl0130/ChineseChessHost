@@ -4,10 +4,8 @@
 #include "CommonDef.h"
 #include "SlaveDef.h"
 #include "StepperMotor.h"
-#include "MatrixKeyboard.h"
 #include "ChessBoard.h"
 #include "SlipTable.h"
-#include "ctype.h"
 /*
 Todo list:
 
@@ -33,40 +31,26 @@ LiquidCrystal_I2C Lcd(0x27, 16, 2);
  ******************
 */
 // 棋盘描述，2层，保存上一次扫描的状态
-char board[2][BoardRow][BoardCol] = {
-	{
-	{ r,h,e,a,k,a,e,h,r },// 9
-	{ b,b,b,b,b,b,b,b,b },// 8
-	{ b,c,b,b,b,b,b,c,b },// 7
-	{ p,b,p,b,p,b,p,b,p },// 6
-	{ b,b,b,b,b,b,b,b,b },// 5
-	{ b,b,b,b,b,b,b,b,b },// 4
-	{ P,b,P,b,P,b,P,b,P },// 3
-	{ b,C,b,b,b,b,b,C,b },// 2
-	{ b,b,b,b,b,b,b,b,b },// 1
-	{ R,H,E,A,K,A,E,H,R } // 0
+Chess board[BoardRow][BoardCol] = {
+	                      // 行号 | 针脚序号(RowStart +)
+	{ r,h,e,a,k,a,e,h,r },// 9    |       0
+	{ b,b,b,b,b,b,b,b,b },// 8    |       1
+	{ b,c,b,b,b,b,b,c,b },// 7    |       2
+	{ p,b,p,b,p,b,p,b,p },// 6    |       3
+	{ b,b,b,b,b,b,b,b,b },// 5    |       4
+	{ b,b,b,b,b,b,b,b,b },// 4    |       5
+	{ P,b,P,b,P,b,P,b,P },// 3    |       6
+	{ b,C,b,b,b,b,b,C,b },// 2    |       7
+	{ b,b,b,b,b,b,b,b,b },// 1    |       8
+	{ R,H,E,A,K,A,E,H,R } // 0    |       9
 //    a b c d e f g h i
-	},
-	{
-	{ r,h,e,a,k,a,e,h,r },// 9
-	{ b,b,b,b,b,b,b,b,b },// 8
-	{ b,c,b,b,b,b,b,c,b },// 7
-	{ p,b,p,b,p,b,p,b,p },// 6
-	{ b,b,b,b,b,b,b,b,b },// 5
-	{ b,b,b,b,b,b,b,b,b },// 4
-	{ P,b,P,b,P,b,P,b,P },// 3
-	{ b,C,b,b,b,b,b,C,b },// 2
-	{ b,b,b,b,b,b,b,b,b },// 1
-	{ R,H,E,A,K,A,E,H,R } // 0
-//   a b c d e f g h i
-	}
 };
-// 当前使用的棋盘描述
-uchr curBoardNo = 0;
+// 玩家当前拿在手里的子，0为自己的子，1为电脑的子
+ChessPoint chessHold[2];
 String tmp;
 char buf[MAX_BUF_SIZE];
 // 对局回合数
-ulong roundCnt;
+ulong roundCnt = 0;
 // 电脑执子
 char AIColor = 'b', AIColorNumber = 'z';
 // 提和计数
@@ -80,8 +64,10 @@ GameState gameState = Play;
 // 棋盘
 ChessBoard chessBoard;
 
-// 检测人移动棋子
-bool humanMoveChess();
+// 检测拿起棋子
+bool detectPickUpChess();
+// 检测放下棋子
+bool detectPutDownChess();
 // 执行命令
 void executeOrder(String& order);
 // 求和 flag:false 人 true 机
@@ -103,15 +89,15 @@ void reset();
 // 结束游戏
 void gameOver(GameState state);
 // 将局面变成FEN规范中的描述
-void boardDescribe(char board[BoardRow][BoardCol], char* buf, uchr& len);
+void boardDescribe(Chess board[BoardRow][BoardCol], char* buf, uchr& len);
 // 生成FEN格式串
-void creatFEN(char board[BoardRow][BoardCol], char* buf, char turn, ulong round);
+void creatFEN(Chess board[BoardRow][BoardCol], char* buf, char turn, ulong round);
 // 从主机接收命令
 String readOrderFromHost();
 // 发送go（思考）命令。state:0 正常，1 求和，2 认输
-void sendGo(uchr state = 0);
+void sendGo(GameState state = Play);
 // 发送棋盘描述。state:0 正常，1 求和，2 认输
-void sendBoard(char board[BoardRow][BoardCol], GameState state = Play);
+void sendBoard(Chess board[BoardRow][BoardCol], GameState state = Play);
 // 检测按键是否按下，默认检测高电平
 bool isPress(uint8_t pin, uint8_t state = HIGH);
 // 初始化串口
@@ -139,19 +125,98 @@ void loop()
 	reset();
 }
 
-bool humanMoveChess()
+bool detectPickUpChess()
 {
-	for (auto i = 0; i <= RowCnt;++i)
+	for (int i = 0; i < RowCnt; ++i)
 	{
 		digitalWrite(RowStart + i, HIGH);
-		for (auto j = 0; j <= ColCnt;++j)
+		for (int j = 0; j < ColCnt; ++j)
 		{
-			if (static_cast<bool>(digitalRead(ColStart + j) == HIGH) !=
-			    static_cast<bool>(board[curBoardNo][i][j] != b) &&
-				isPress(ColStart + j))
+			if(board[i][j] != b /*该处之前有子*/
+			&& digitalRead(ColStart + j) == LOW /*现在此处无子*/
+			&& isPress(ColStart + j, LOW) /*防抖检测*/)
 			{
-				// 有子拿起或落下
+				if (isUpperCase(AIColorNumber) != isUpperCase(board[i][j]))
+				{
+					// 拿起的子不是电脑的子
+					// 修改游戏状态
+					gameState = PlayerHoldHis;
+					// 记录拿起的是玩家的子
+					chessHold[0] = ChessPoint(RowCnt - i - 1, j, board[i][j]);
+				}
+				else
+				{
+					gameState = PlayerHoldOpp;
+					// 记录拿起的是电脑的子
+					chessHold[1] = ChessPoint(RowCnt - i - 1, j, board[i][j]);
+				}
+				// 该位置修改为无子
+				board[i][j] = b;
+				return true;
+			}
+		}
+	}
+	return false;
+}
 
+bool detectPutDownChess()
+{
+	for (int i = 0; i < RowCnt; ++i)
+	{
+		digitalWrite(RowStart + i, HIGH);
+		for (int j = 0; j < ColCnt; ++j)
+		{
+			if (board[i][j] == b /*该处之前无子*/
+				&& digitalRead(ColStart + j) == HIGH /*现在此处有子*/
+				&& isPress(ColStart + j, HIGH) /*防抖检测*/)
+			{
+				switch(gameState)
+				{
+				case PlayerHoldHis:
+					if(RowCnt - i - 1 == chessHold[0].row && j == chessHold[0].col)
+					{
+						// 玩家把原来拿起来的子放下了
+						gameState = Play;
+						board[i][j] = chessHold[0].chess;
+					}
+					else
+					{
+						// 玩家落子
+						gameState = MoveDone;
+						board[i][j] = chessHold[0].chess;
+					}
+					break;
+				case PlayerHoldOpp:
+					if (RowCnt - i - 1 == chessHold[1].row && j == chessHold[1].col)
+					{
+						// 玩家把原来拿起来的子放下了
+						gameState = Play;
+						board[i][j] = chessHold[1].chess;
+					}
+					else
+					{
+						// ！！错误行为 需要提示
+						gameState = Play;
+						board[i][j] = chessHold[0].chess;
+					}
+					break;
+				case PlayerHoldTwo:
+					if (RowCnt - i - 1 == chessHold[0].row && j == chessHold[0].col)
+					{
+						// 玩家把原来拿起来的自己子放下了
+						gameState = PlayerHoldOpp;
+						board[i][j] = chessHold[0].chess;
+					}
+					else if (RowCnt - i - 1 == chessHold[1].row && j == chessHold[1].col)
+					{
+						// 玩家吃了子
+						gameState = MoveDone;
+						board[i][j] = chessHold[0].chess;
+					}
+				default:
+					break;
+				}
+				return true;
 			}
 		}
 	}
@@ -206,7 +271,7 @@ bool draw(bool flag)
 	}
 	if (flag == false)
 	{// 人提和
-		sendBoard(board[curBoardNo], Draw);
+		sendBoard(board, Draw);
 	}
 	else
 	{// 引擎提和
@@ -258,7 +323,7 @@ bool resign(bool flag)
 	}
 	if (flag == false)
 	{// 人认输
-		sendBoard(board[curBoardNo], Resign);
+		sendBoard(board, Resign);
 	}
 	else
 	{// 引擎认输
@@ -455,16 +520,22 @@ void playing()
 			先列好各种情况，等待完善
 			*/
 		case Play:
+			detectPickUpChess();
 			break;
-		case PlayerHoldHis:
-			break;
-		case PlayerHoldOpp:
-			break;
-		case PlayerHoldTwo:
+		case PlayerHoldHis:case PlayerHoldOpp:case PlayerHoldTwo:
+			detectPutDownChess();
 			break;
 		case MoveDone:
+			sendBoard(board);
+			gameState = WaitOrder;
 			break;
 		case WaitOrder:
+			if (comSer.available())
+			{
+				tmp = readOrderFromHost();
+				executeOrder(tmp);
+			}
+			gameState = Play;
 			break;
 		case Win:case Lose:case Draw:case Resign:
 			// 这4个状态是已经进入gameOver的，所以结束本函数
@@ -472,21 +543,6 @@ void playing()
 		default:
 			break;
 		}
-		/*
-		if (humanMoveChess())
-		{
-			sendBoard(board[curBoardNo]);
-			delay(500);
-			tmp = readOrderFromHost();
-			executeOrder(tmp);
-		}
-		if (comSer.available())
-		{
-			tmp = readOrderFromHost();
-			executeOrder(tmp);
-		}
-		delay(100);
-		*/
 	}
 }
 
@@ -530,7 +586,7 @@ void gameOver(GameState state)
 	}
 }
 
-void boardDescribe(char board[BoardRow][BoardCol], char* buf, uchr& len)
+void boardDescribe(Chess board[BoardRow][BoardCol], char* buf, uchr& len)
 {
 	len = 0;
 	for (uchr i = 0; i < BoardRow; ++i)
@@ -565,7 +621,7 @@ void boardDescribe(char board[BoardRow][BoardCol], char* buf, uchr& len)
 	}
 }
 
-void creatFEN(char board[BoardRow][BoardCol], char* buf, char turn, ulong round)
+void creatFEN(Chess board[BoardRow][BoardCol], char* buf, char turn, ulong round)
 {
 	uchr len;
 
@@ -601,22 +657,22 @@ String readOrderFromHost()
 	}
 }
 
-void sendGo(uchr state)
+void sendGo(GameState state)
 {
 	comSer.print("go depth ");
 	comSer.print(diff);
-	if (state == 1)
+	if (state == Draw)
 	{// 提和
 		comSer.print(" draw");
 	}
-	else if (state == 2)
+	else if (state == Resign)
 	{
 		comSer.print(" resign");
 	}
 	comSer.print('\n');
 }
 
-void sendBoard(char board[BoardRow][BoardCol], GameState state)
+void sendBoard(Chess board[BoardRow][BoardCol], GameState state)
 {
 	creatFEN(board, buf, AIColor, ++roundCnt);
 	comSer.println(buf);
@@ -698,11 +754,11 @@ void initPin()
 	pinMode(EndKey, INPUT_PULLUP);
 	pinMode(LeftKey, INPUT_PULLUP);
 	pinMode(RightKey, INPUT_PULLUP);
-	for (auto i = 0; i <= RowCnt; ++i)
+	for (char i = 0; i <= RowCnt; ++i)
 	{
 		pinMode(RowStart + i, OUTPUT);
 	}
-	for (auto i = 0; i <= ColCnt;++i)
+	for (char i = 0; i <= ColCnt;++i)
 	{
 		pinMode(ColStart + i, INPUT);
 	}
