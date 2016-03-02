@@ -1,19 +1,41 @@
 #include "StepperMotor.h"
+#include <Arduino.h>
 
 // 步进电机转动一步
 void StepperMotor::OneStep() const
 {
+	digitalWrite(pulsePin, HIGH);
+	delayMicroseconds(pulseTime);
+	digitalWrite(pulsePin, LOW);
 }
 
-StepperMotor::StepperMotor(uchr in0, uchr in1, uchr in2, uchr in3, uint step, int pos) :
-	Pin0(in0), Pin1(in1), Pin2(in2), Pin3(in3), state(0), Pos(pos), StepPreCircle(step)
+StepperMotor::StepperMotor(uchr pPin, uchr dPin, uint step) :
+	pulsePin(pPin), dirPin(dPin), Pos(0), StepPreCircle(step)
 {
+	pinMode(pulsePin, OUTPUT);
+	digitalWrite(pulsePin, LOW);
+	pinMode(dirPin, OUTPUT);
+	digitalWrite(dirPin, LOW);
 }
 
 void StepperMotor::run(Direction dir, uint step, uint freq)
 {
+	setDirection(dir);
+	if (dir == FORWORD)
+		Pos = (Pos + step) % StepPreCircle;
+	else
+		Pos = (Pos - step + StepPreCircle) % StepPreCircle;
+	while (step--)
+	{
+		OneStep();
+		delayMicroseconds(10000000L / freq - pulseTime);
+	}
 }
 
 void StepperMotor::run(int step, uint freq)
 {
+	if (step > 0)
+		run(FORWORD, step, freq);
+	else
+		run(BACKWORD, -step, freq);
 }

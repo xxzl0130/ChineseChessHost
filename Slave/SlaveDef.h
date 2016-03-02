@@ -55,4 +55,51 @@ enum GameState
 	WaitOrder
 };
 
+// 棋子的定义，大写为红方，小写为黑方
+enum Chess
+{
+	// 帅&将
+	k = 'k', K = 'K',
+	// 仕&士
+	a = 'a', A = 'A',
+	// 相&象
+	e = 'e', E = 'E',
+	// 马&馬
+	h = 'h', H = 'H',
+	// 车&車
+	r = 'r', R = 'R',
+	// 炮
+	c = 'c', C = 'C',
+	// 兵&卒
+	p = 'p', P = 'P',
+	// 空
+	b = '\0'
+};
+
+class ChessPoint
+{
+public:
+	char row, col;
+	Chess chess;
+	ChessPoint() :row(0), col(0), chess(b) {}
+	ChessPoint(char _r, char _c, Chess _ch) :row(_r), col(_c), chess(_ch) {}
+
+	char* operator - (const ChessPoint& p)const
+	{
+		static char s[5] = { 0,0,0,0,0 };
+		s[0] = static_cast<char>(col) + 'a';
+		s[1] = static_cast<char>(row) + '0';
+		s[2] = static_cast<char>(p.col) + 'a';
+		s[3] = static_cast<char>(p.row) + '0';
+		return s;
+	}
+};
+
+// 细分步数
+#define circleStep		6400u
+// 棋盘长度 mm
+#define boardLength		250
+// 棋盘宽度 mm
+#define boardWidth		250
+
 #endif // __SLAVE_DEF_H__

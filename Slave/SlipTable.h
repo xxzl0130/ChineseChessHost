@@ -1,7 +1,6 @@
 #ifndef __SLIP_TABLE_H__
 #define __SLIP_TABLE_H__
 
-#include <Arduino.h>
 #include "StepperMotor.h"
 #include "CommonDef.h"
 
@@ -17,9 +16,19 @@
 #define uint unsigned long
 #endif
 
-struct Point
+template <typename T>
+class Point
 {
-	ulong x, y;
+public:
+	T x, y;
+
+	Point(): x(0), y(0)
+	{
+	}
+
+	Point(T _x, T _y): x(_x), y(_y)
+	{
+	}
 };
 
 class SlipTable
@@ -28,20 +37,25 @@ private:
 	// 两轴的步进电机
 	StepperMotor xAxis, yAxis;
 	// 位置信息
-	ulong xPos, yPos;
-	/*
-	以及其他可能需要的信息
-	*/
+	Point<float> pos;
+	// 尺寸 单位mm
+	uint xLength, yLength;
+	// 限位开关
+	uchr xSwitch1, xSwitch2, ySwitch1, ySwitch2;
+	// 总步数
+	ulong xTotalStep, yTotalStep;
+	// 每步长度
+	float xLengthPerStep, yLengthPerStep;
 public:
 	/*
-	构造函数，视情况添加所需参数
+	构造函数，进行IO口的初始化，数据的初始化
 	*/
-	SlipTable();
+	SlipTable(StepperMotor x, StepperMotor y, ulong xMax, ulong yMax, uchr xS1, uchr xS2, uchr yS1, uchr yS2);
 	/*
 	获取当前位置
 	返回值为结构体Point
 	*/
-	Point getPos();
+	Point<float> getPos() const;
 	/*
 	将两轴归零以确定坐标系原点
 	*/
@@ -49,7 +63,7 @@ public:
 	/*
 	移动到指定坐标
 	*/
-	void move(Point pos);
+	void move(Point<float> pos);
 	void move(ulong x, ulong y);
 };
 

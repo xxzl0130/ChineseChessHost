@@ -4,7 +4,6 @@
 #include "CommonDef.h"
 #include "SlaveDef.h"
 #include "StepperMotor.h"
-#include "ChessBoard.h"
 #include "SlipTable.h"
 /*
 Todo list:
@@ -61,8 +60,9 @@ uchr resignCnt;
 DIFFICULTY diff = easy;
 // 游戏状态
 GameState gameState = Play;
-// 棋盘
-ChessBoard chessBoard;
+// 滑台
+SlipTable table(StepperMotor(46, 47, circleStep), StepperMotor(48, 49, circleStep),
+	boardLength, boardWidth, 50, 51, 52, 53);
 
 // 检测拿起棋子
 bool detectPickUpChess();
@@ -108,6 +108,9 @@ void initBoard();
 void initLCD();
 // 初始化GPIO Pin
 void initPin();
+// 移动棋子
+void moveChess(char order[4]);
+void moveChess(String order);
 
 void setup()
 {
@@ -257,7 +260,7 @@ void executeOrder(String& order)
 		move[i] = ptr[i];
 	}
 	// 走子
-	chessBoard.moveChess(move);
+	//chessBoard.moveChess(move);
 }
 
 bool draw(bool flag)
@@ -762,4 +765,14 @@ void initPin()
 	{
 		pinMode(ColStart + i, INPUT);
 	}
+}
+
+void moveChess(char order[4])
+{
+	
+}
+
+void moveChess(String order)
+{
+	
 }

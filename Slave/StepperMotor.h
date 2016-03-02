@@ -20,14 +20,15 @@ enum Direction
 class StepperMotor
 {
 private:
-	// 信号针脚
-	uchr Pin0, Pin1, Pin2, Pin3;
-	// 当前信号状态
-	uchr state;
+	// 脉冲信号，方向信号
+	uchr pulsePin, dirPin;
 	// 当前位置
-	int Pos;
+	uint Pos;
 	// 细分格数
 	uint StepPreCircle;
+	// 脉冲时长(us)
+	const static uchr pulseTime = 10;
+
 	// 步进电机转动一步
 	void OneStep() const;
 
@@ -35,7 +36,7 @@ public:
 	/*
 	构造函数，进行IO口的初始化，数据的初始化
 	*/
-	StepperMotor(uchr, uchr, uchr, uchr, uint, int pos = 0);
+	StepperMotor(uchr pPin, uchr dPin, uint step);
 	/*
 	步进电机转动
 	参数0 Dir  转动方向
@@ -51,7 +52,7 @@ public:
 	void run(int step, uint freq = 1000);
 
 	// 获得当前位置
-	int getPos() const
+	uint getPos() const
 	{
 		return Pos;
 	}
@@ -66,6 +67,12 @@ public:
 	float getAngle() const
 	{
 		return 360.0 / StepPreCircle * Pos;
+	}
+
+	// 设置转动方向
+	void setDirection(Direction dir) const
+	{
+		digitalWrite(dirPin, dir == FORWORD ? HIGH : LOW);
 	}
 };
 
