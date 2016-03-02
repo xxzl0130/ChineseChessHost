@@ -51,8 +51,27 @@ void SlipTable::move(Point<float> pos)
 	move(pos.x, pos.y);
 }
 
-void SlipTable::move(ulong x, ulong y)
+void SlipTable::move(float x, float y)
 {
+	/*
+	软限位
+	*/
+	if(x < 0.0)
+	{
+		x = 0.0;
+	}
+	else if(x > xLength)
+	{
+		x = xLength;
+	}
+	if(y < 0.0)
+	{
+		y = 0.0;
+	}
+	else if(y > yLength)
+	{
+		y = yLength;
+	}
 	// x轴要移动的步数
 	ulong xAxisToGo = abs(x - pos.x) / xLengthPerStep + 0.5;
 	// y轴要移动的步数

@@ -64,7 +64,7 @@ public:
 	移动到指定坐标
 	*/
 	void move(Point<float> pos);
-	void move(ulong x, ulong y);
+	void move(float x, float y);
 };
 
 #endif // __SLIP_TABLE_H__
