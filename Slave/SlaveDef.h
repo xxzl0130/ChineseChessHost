@@ -2,6 +2,7 @@
 #define __SLAVE_DEF_H__
 
 #include "CommonDef.h"
+#include "SimpleSDAudio/SimpleSDAudio.h"
 
 // 缓冲区最大大小(1KB)
 #define MAX_BUF_SIZE (1 * 1024)
@@ -24,8 +25,21 @@
 #define RowCnt		10
 // 棋盘列引脚起始口
 #define ColStart	32
-// 棋盘行列数
-#define ColCnt		40
+// 棋盘列数
+#define ColCnt		9
+
+// SPI接口
+#define MISO_PIN	50
+#define MOSI_PIN	51
+#define SCK_PIN		52
+#define CS_PIN		53
+
+// 左声道
+#define LeftAudio	44
+// 右声道
+#define RightAudio	45
+// 音频模式 全速率&双声道
+#define AudioMode	(SSDA_MODE_FULLRATE | SSDA_MODE_STEREO)
 
 #ifdef DEBUG
 // 测试使用的串口

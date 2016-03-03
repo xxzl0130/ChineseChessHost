@@ -5,6 +5,7 @@
 #include "SlaveDef.h"
 #include "StepperMotor.h"
 #include "SlipTable.h"
+#include "SimpleSDAudio\SimpleSDAudio.h"
 /*
 Todo list:
 
@@ -108,9 +109,13 @@ void initBoard();
 void initLCD();
 // 初始化GPIO Pin
 void initPin();
+// 初始化SDPlayer
+void initSDPlayer();
 // 移动棋子
 void moveChess(char order[4]);
 void moveChess(String order);
+// 播放音乐
+void playAudio(char Filename[]);
 
 void setup()
 {
@@ -767,6 +772,13 @@ void initPin()
 	}
 }
 
+void initSDPlayer()
+{
+	SdPlay.setWorkBuffer(static_cast<uint8_t*>(static_cast<void*>(buf)),MAX_BUF_SIZE);
+	SdPlay.setSDCSPin(CS_PIN);
+	SdPlay.init(AudioMode);
+}
+
 void moveChess(char order[4])
 {
 	
@@ -775,4 +787,16 @@ void moveChess(char order[4])
 void moveChess(String order)
 {
 	
+}
+
+void playAudio(char Filename[])
+{
+	// 设置文件
+	SdPlay.setFile(Filename);
+	SdPlay.worker();
+	SdPlay.play();
+	while(!SdPlay.isStopped())
+	{
+		SdPlay.worker();
+	}
 }
