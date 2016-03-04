@@ -1,6 +1,5 @@
-#include <Wire\Wire.h>
 #include <LiquidCrystal_I2C\LiquidCrystal_I2C.h>
-#include <String.h>
+#include <string.h>
 #include "CommonDef.h"
 #include "SlaveDef.h"
 #include "StepperMotor.h"
@@ -786,7 +785,7 @@ void moveChess(char order[4])
 
 void moveChess(String order)
 {
-	
+	moveChess(order.c_str());
 }
 
 void playAudio(char Filename[])

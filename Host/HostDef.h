@@ -24,7 +24,7 @@ void initSerialArg(int argc, char** argv);
 并向从机发送初始化信息以确认连接。
 初始化错误将终止整个程序。
 */
-void initSerial(string port, uint baud = baudRate);
+void initSerial(string port, uint baud = generalBaudRate);
 /*
 初始化象棋引擎，并进行基本设置
 */
