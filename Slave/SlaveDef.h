@@ -4,8 +4,8 @@
 #include "CommonDef.h"
 #include "SimpleSDAudio/SimpleSDAudio.h"
 
-// 缓冲区最大大小(1KB)
-#define MAX_BUF_SIZE (1 * 1024)
+// 缓冲区最大大小(256B)
+#define MAX_BUF_SIZE (256)
 
 // LED针脚
 #define ledPin 13
