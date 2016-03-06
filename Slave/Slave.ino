@@ -8,15 +8,14 @@
 #include "SimpleSDAudio\SimpleSDAudio.h"
 /*
 Todo list:
-
-## 检测棋子的函数
-
 // 开始
 void start();
 // 游戏进行
 void playing(); // 需要调整
 // 重置棋盘
 void reset();
+
+getAvailableRecycleBin()
 
 */
 
@@ -63,7 +62,7 @@ DIFFICULTY diff = easy;
 GameState gameState = Play;
 // 滑台
 SlipTable table(StepperMotor(46, 47, circleStep), StepperMotor(48, 49, circleStep),
-	boardLength, boardWidth, 50, 51, 52, 53);
+	boardLength, boardWidth, 50, 51, 52, 53, pitch);
 
 // 检测拿起棋子
 bool detectPickUpChess();
@@ -116,13 +115,16 @@ void moveChess(char order[4]);
 void moveChess(String order);
 // 播放音乐
 void playAudio(char Filename[]);
+// 返回一个可用的弃子区域
+Point<float> getAvailableRecycleBin();
 
 void setup()
 {
 	initPin();
-	initLCD();
+	//initLCD();
 	initSerial();
-	initBoard();
+	//initBoard();
+	while (true);
 }
 
 void loop()
@@ -707,6 +709,7 @@ bool initSerial()
 	comSer.begin(generalBaudRate);
 	if (!comSer)
 		return false;
+	while (!comSer.available());
 	for (uchr i = 0; i < 3; ++i)
 	{
 		tmp = comSer.readString();
@@ -781,7 +784,26 @@ void initSDPlayer()
 
 void moveChess(char order[4])
 {
-	
+	Point<float> scr, dst, extr;
+	// 棋子坐标
+	scr.x = xAxisStart + (order[0] - 'a') * boxWidth;
+	scr.y = yAxisStart + (order[1] - '0') * boxWidth;
+	// 目标坐标
+	dst.x = xAxisStart + (order[2] - 'a') * boxWidth;
+	dst.y = yAxisStart + (order[3] - '0') * boxWidth;
+	if(board[9 - (order[3] - '0')][order[2] - 'a'] != 'b')
+	{
+		// 目标处有子，即要吃子
+		// 先移动到弃子处
+		table.move(dst);
+		// todo:拿起棋子
+		table.move(getAvailableRecycleBin());
+		// todo:放下弃子
+	}
+	table.move(scr);
+	// todo:拿起棋子
+	table.move(dst);
+	// todo:放下棋子
 }
 
 void moveChess(String order)
@@ -799,4 +821,10 @@ void playAudio(char Filename[])
 	{
 		SdPlay.worker();
 	}
+}
+
+Point<float> getAvailableRecycleBin()
+{
+	Point<float> bin;
+	return bin;
 }

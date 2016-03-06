@@ -1,16 +1,15 @@
 #include "SlipTable.h"
 #include <Arduino.h>
 
-SlipTable::SlipTable(StepperMotor x, StepperMotor y, ulong xMax, ulong yMax,
-	uchr xS1,uchr xS2, uchr yS1,uchr yS2)
-	:xAxis(x),yAxis(y),pos(0,0),xLength(xMax),yLength(yMax),
-	xSwitch1(xS1), xSwitch2(xS2),ySwitch1(yS1), ySwitch2(yS2),
-	xTotalStep(0),yTotalStep(0),xLengthPerStep(0),yLengthPerStep(0)
+SlipTable::SlipTable(StepperMotor x, StepperMotor y, ulong xLen, ulong yLen, uchr xS1, uchr xS2, uchr yS1, uchr yS2, float sP)
+	:xAxis(x),yAxis(y),pos(0,0),xLength(xLen),yLength(yLen),
+	xSwitch1(xS1), xSwitch2(xS2),ySwitch1(yS1), ySwitch2(yS2),screwPitch(sP)
 {
 	pinMode(xSwitch1, INPUT_PULLUP);
 	pinMode(xSwitch2, INPUT_PULLUP);
 	pinMode(ySwitch1, INPUT_PULLUP);
 	pinMode(xSwitch2, INPUT_PULLUP);
+	LengthPerStep = screwPitch / xAxis.getStepPerCircle();
 }
 
 Point<float> SlipTable::getPos() const
@@ -20,28 +19,14 @@ Point<float> SlipTable::getPos() const
 
 void SlipTable::reset()
 {
-	xTotalStep = yTotalStep = 0;
-	while (digitalRead(xSwitch2) == HIGH)
-	{// 接触限位开关后信号为低 停止
-		xAxis.run(FORWORD, 1);
-	}
-	while (digitalRead(ySwitch2) == HIGH)
-	{// 接触限位开关后信号为低 停止
-		yAxis.run(FORWORD, 1);
-	}
-	// 找到一个底后反向回去
 	while (digitalRead(xSwitch1) == HIGH)
 	{// 接触限位开关后信号为低 停止
 		xAxis.run(BACKWORD, 1);
-		++xTotalStep;
 	}
 	while (digitalRead(ySwitch1) == HIGH)
 	{// 接触限位开关后信号为低 停止
 		yAxis.run(BACKWORD, 1);
-		++yTotalStep;
 	}
-	xLengthPerStep = static_cast<float>(xLength) / xTotalStep;
-	yLengthPerStep = static_cast<float>(yLength) / yTotalStep;
 	pos.x = 0.0;
 	pos.y = 0.0;
 }
@@ -73,16 +58,16 @@ void SlipTable::move(float x, float y)
 		y = yLength;
 	}
 	// x轴要移动的步数
-	ulong xAxisToGo = abs(x - pos.x) / xLengthPerStep + 0.5;
+	ulong xAxisToGo = abs(x - pos.x) / LengthPerStep + 0.5;
 	// y轴要移动的步数
-	ulong yAxisToGo = abs(y - pos.y) / xLengthPerStep + 0.5;
+	ulong yAxisToGo = abs(y - pos.y) / LengthPerStep + 0.5;
 	// x轴方向
 	Direction xDir = x > pos.x ? FORWORD : BACKWORD;
 	// y轴方向
 	Direction yDir = y > pos.y ? FORWORD : BACKWORD;
 	// 以实际走的步数计算位置，避免累积误差
-	pos.x += xAxisToGo * xLengthPerStep * (xDir == FORWORD ? 1 : -1);
-	pos.y += yAxisToGo * yLengthPerStep * (yDir == FORWORD ? 1 : -1);
+	pos.x += xAxisToGo * LengthPerStep * (xDir == FORWORD ? 1 : -1);
+	pos.y += yAxisToGo * LengthPerStep * (yDir == FORWORD ? 1 : -1);
 	while (xAxisToGo || yAxisToGo)
 	{
 		// 两轴交替运动

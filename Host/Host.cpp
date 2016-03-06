@@ -34,12 +34,13 @@ int main(int argc, char** argv)
 	vector<thread> th;
 	hScreen = GetStdHandle(STD_OUTPUT_HANDLE);
 	// 分多线程初始化
-	//th.push_back(thread(initSerialArg, argc, argv));
+	th.push_back(thread(initSerialArg, argc, argv));
 	th.push_back(thread(initEngine));
 	for (auto it = th.begin(); it != th.end(); ++it)
 	{
 		it->join();
 	}
+	cout << "Init all done." << endl;
 	work();
 	return 0;
 }

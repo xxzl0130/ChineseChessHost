@@ -42,15 +42,15 @@ private:
 	uint xLength, yLength;
 	// 限位开关
 	uchr xSwitch1, xSwitch2, ySwitch1, ySwitch2;
-	// 总步数
-	ulong xTotalStep, yTotalStep;
+	// 螺距
+	float screwPitch;
 	// 每步长度
-	float xLengthPerStep, yLengthPerStep;
+	float LengthPerStep;
 public:
 	/*
 	构造函数，进行IO口的初始化，数据的初始化
 	*/
-	SlipTable(StepperMotor x, StepperMotor y, ulong xMax, ulong yMax, uchr xS1, uchr xS2, uchr yS1, uchr yS2);
+	SlipTable(StepperMotor x, StepperMotor y, ulong xLen, ulong yLen, uchr xS1, uchr xS2, uchr yS1, uchr yS2,float sP);
 	/*
 	获取当前位置
 	返回值为结构体Point

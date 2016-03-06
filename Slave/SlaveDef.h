@@ -111,9 +111,16 @@ public:
 
 // 细分步数
 #define circleStep		6400u
+// 螺距(mm)
+#define pitch			5
 // 棋盘长度 mm
 #define boardLength		250
 // 棋盘宽度 mm
 #define boardWidth		250
-
+// 格子宽度
+#define boxWidth		20
+// 棋盘起始横坐标
+#define xAxisStart		20
+// 棋盘起始纵坐标
+#define yAxisStart		20
 #endif // __SLAVE_DEF_H__

@@ -74,6 +74,11 @@ public:
 	{
 		digitalWrite(dirPin, dir == FORWORD ? HIGH : LOW);
 	}
+
+	uint getStepPerCircle()
+	{
+		return StepPreCircle;
+	}
 };
 
 #endif // __STEPPER_MOTOR_H__
