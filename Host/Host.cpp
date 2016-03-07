@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 void initSerialArg(int argc, char** argv)
 {
 	string port;
-	uint baud;
+	uint baud = generalBaudRate;
 	if (argc == 1)
 	{// 命令行未提供参数则由屏幕输入
 		cout << "Port:";
@@ -93,6 +93,7 @@ void initSerial(string port, uint baud)
 		goto serialErr;
 	}
 	return;
+	/*
 	// 向从机发送握手信息
 	slave.write(testComHost);
 	// 检查回收的握手信息
@@ -107,7 +108,7 @@ void initSerial(string port, uint baud)
 	}
 	cerr << __LINE__ << ":";
 	goto serialErr;
-
+	*/
 serialErr:
 	cerr << "无法打开串口:" << slave.getPort();
 	system("pause");

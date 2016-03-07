@@ -784,7 +784,7 @@ void initSDPlayer()
 
 void moveChess(char order[4])
 {
-	Point<float> scr, dst, extr;
+	Point<float> scr, dst;
 	// Æå×Ó×ø±ê
 	scr.x = xAxisStart + (order[0] - 'a') * boxWidth;
 	scr.y = yAxisStart + (order[1] - '0') * boxWidth;
