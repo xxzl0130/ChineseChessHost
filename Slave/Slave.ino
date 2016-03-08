@@ -23,15 +23,15 @@ getAvailableRecycleBin()
 LiquidCrystal_I2C Lcd(0x27, 16, 2);
 /*
 显示屏样式：
- 0123456789012345
- ******************
+0123456789012345
+******************
 0*                *0x80
 1*                *0xC0
- ******************
+******************
 */
 // 棋盘描述，2层，保存上一次扫描的状态
 Chess board[BoardRow][BoardCol] = {
-	                      // 行号 | 针脚序号(RowStart +)
+	// 行号 | 针脚序号(RowStart +)
 	{ r,h,e,a,k,a,e,h,r },// 9    |       0
 	{ b,b,b,b,b,b,b,b,b },// 8    |       1
 	{ b,c,b,b,b,b,b,c,b },// 7    |       2
@@ -42,7 +42,7 @@ Chess board[BoardRow][BoardCol] = {
 	{ b,C,b,b,b,b,b,C,b },// 2    |       7
 	{ b,b,b,b,b,b,b,b,b },// 1    |       8
 	{ R,H,E,A,K,A,E,H,R } // 0    |       9
-//    a b c d e f g h i
+						  //    a b c d e f g h i
 };
 // 玩家当前拿在手里的子，0为自己的子，1为电脑的子
 ChessPoint chessHold[2];
@@ -142,9 +142,9 @@ bool detectPickUpChess()
 		digitalWrite(RowStart + i, HIGH);
 		for (int j = 0; j < ColCnt; ++j)
 		{
-			if(board[i][j] != b /*该处之前有子*/
-			&& digitalRead(ColStart + j) == LOW /*现在此处无子*/
-			&& isPress(ColStart + j, LOW) /*防抖检测*/)
+			if (board[i][j] != b /*该处之前有子*/
+				&& digitalRead(ColStart + j) == LOW /*现在此处无子*/
+				&& isPress(ColStart + j, LOW) /*防抖检测*/)
 			{
 				if (isUpperCase(AIColorNumber) != isUpperCase(board[i][j]))
 				{
@@ -180,10 +180,10 @@ bool detectPutDownChess()
 				&& digitalRead(ColStart + j) == HIGH /*现在此处有子*/
 				&& isPress(ColStart + j, HIGH) /*防抖检测*/)
 			{
-				switch(gameState)
+				switch (gameState)
 				{
 				case PlayerHoldHis:
-					if(RowCnt - i - 1 == chessHold[0].row && j == chessHold[0].col)
+					if (RowCnt - i - 1 == chessHold[0].row && j == chessHold[0].col)
 					{
 						// 玩家把原来拿起来的子放下了
 						gameState = Play;
@@ -267,7 +267,7 @@ void executeOrder(String& order)
 		move[i] = ptr[i];
 	}
 	// 走子
-	//chessBoard.moveChess(move);
+	moveChess(move);
 }
 
 bool draw(bool flag)
@@ -389,7 +389,7 @@ void selectDiff()
 			switch (diff)
 			{
 			case easy:
-			// easy已无法降低
+				// easy已无法降低
 				Lcd.setCursor(0, 0);
 				Lcd.print(" >Easy< Normal ");
 				diff = easy;
@@ -436,7 +436,7 @@ void selectDiff()
 				diff = master;
 				break;
 			case master:
-			// master已无法提高难度
+				// master已无法提高难度
 				diff = master;
 				break;
 			}
@@ -454,22 +454,22 @@ void selectOrder()
 	Lcd.print("  >Red<  Black  ");
 	while (true)
 	{
-		if (isPress(StartKey,LOW))
+		if (isPress(StartKey, LOW))
 		{
 			// 先后手选择完成
 			break;
 		}
-		if (isPress(LeftKey,LOW))
+		if (isPress(LeftKey, LOW))
 		{
 			switch (AIColor)
 			{
 			case 'b':
-			// 默认电脑执黑棋
+				// 默认电脑执黑棋
 				AIColor = 'b';
 				AIColorNumber = 'z';
 				break;
 			case 'r':
-			// 切换到黑棋
+				// 切换到黑棋
 				Lcd.setCursor(0, 1);
 				Lcd.print("  >Red<  Black  ");
 				// 玩家执红电脑执黑
@@ -482,7 +482,7 @@ void selectOrder()
 				break;
 			}
 		}
-		if (isPress(RightKey,LOW))
+		if (isPress(RightKey, LOW))
 		{
 			switch (AIColor)
 			{
@@ -512,47 +512,22 @@ void start()
 
 void playing()
 {
-	while (true)
+	// 预先设定好的走法
+	char order[10][4] = {
+		"g9e7",//b2b4 
+		"b9c7",//h2e2 
+		"h9f8",//h0g2 
+		"c6c5",//i0h0 
+		"g6g5",//b0a2 
+		"b7b0",//a0b0 
+		"g5g4",//a2b0 
+		"a9b9",//g3g4 
+		"c5c4" //b4c4 
+	};
+	for (int i = 0; i < 9; ++i)
 	{
-		// 求和
-		if(isPress(StartKey,LOW))
-		{
-			draw(false);
-		}
-		// 认输
-		if(isPress(EndKey,LOW))
-		{
-			resign(false);
-		}
-		switch(gameState)
-		{
-			/*
-			先列好各种情况，等待完善
-			*/
-		case Play:
-			detectPickUpChess();
-			break;
-		case PlayerHoldHis:case PlayerHoldOpp:case PlayerHoldTwo:
-			detectPutDownChess();
-			break;
-		case MoveDone:
-			sendBoard(board);
-			gameState = WaitOrder;
-			break;
-		case WaitOrder:
-			if (comSer.available())
-			{
-				tmp = readOrderFromHost();
-				executeOrder(tmp);
-			}
-			gameState = Play;
-			break;
-		case Win:case Lose:case Draw:case Resign:
-			// 这4个状态是已经进入gameOver的，所以结束本函数
-			return;
-		default:
-			break;
-		}
+		moveChess(order[i]);
+		delay(5000);
 	}
 }
 
@@ -726,18 +701,18 @@ bool initSerial()
 	/*
 	Serial2.begin(generalBaudRate);
 	if (!Serial2)
-		return false;
+	return false;
 	Serial.println(testComHost);
 	for (uchr i = 0; i < 3; ++i)
 	{
-		tmp = comSer.readString();
-		if (strstr(tmp.c_str(), testComSlave) != NULL)
-		{ // 找到应有字符串，表示连接成功
-			Lcd.setCursor(0, 1);
-			Lcd.print("SERIAL2 OK!");
-			return true;
-		}
-		delay(100);
+	tmp = comSer.readString();
+	if (strstr(tmp.c_str(), testComSlave) != NULL)
+	{ // 找到应有字符串，表示连接成功
+	Lcd.setCursor(0, 1);
+	Lcd.print("SERIAL2 OK!");
+	return true;
+	}
+	delay(100);
 	}*/
 	return false;
 }
@@ -769,7 +744,7 @@ void initPin()
 	{
 		pinMode(RowStart + i, OUTPUT);
 	}
-	for (char i = 0; i <= ColCnt;++i)
+	for (char i = 0; i <= ColCnt; ++i)
 	{
 		pinMode(ColStart + i, INPUT);
 	}
@@ -777,7 +752,7 @@ void initPin()
 
 void initSDPlayer()
 {
-	SdPlay.setWorkBuffer(static_cast<uint8_t*>(static_cast<void*>(buf)),MAX_BUF_SIZE);
+	SdPlay.setWorkBuffer(static_cast<uint8_t*>(static_cast<void*>(buf)), MAX_BUF_SIZE);
 	SdPlay.setSDCSPin(CS_PIN);
 	SdPlay.init(AudioMode);
 }
@@ -791,7 +766,7 @@ void moveChess(char order[4])
 	// 目标坐标
 	dst.x = xAxisStart + (order[2] - 'a') * boxWidth;
 	dst.y = yAxisStart + (order[3] - '0') * boxWidth;
-	if(board[9 - (order[3] - '0')][order[2] - 'a'] != 'b')
+	if (board[9 - (order[3] - '0')][order[2] - 'a'] != 'b')
 	{
 		// 目标处有子，即要吃子
 		// 先移动到弃子处
@@ -817,7 +792,7 @@ void playAudio(char Filename[])
 	SdPlay.setFile(Filename);
 	SdPlay.worker();
 	SdPlay.play();
-	while(!SdPlay.isStopped())
+	while (!SdPlay.isStopped())
 	{
 		SdPlay.worker();
 	}
@@ -827,9 +802,9 @@ Point<float> getAvailableRecycleBin()
 {
 	Point<float> bin;
 	static uchr list[10] = { 0 };
-	for (int i = 0; i < 10;++i)
+	for (int i = 0; i < 10; ++i)
 	{
-		if(list[i] < 2)
+		if (list[i] < 2)
 		{
 			++list[i];
 			bin.y = boxWidth * (i + 1);
