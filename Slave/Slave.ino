@@ -513,7 +513,7 @@ void start()
 void playing()
 {
 	// 预先设定好的走法
-	char order[10][4] = {
+	char order[10][5] = {
 		"g9e7",//b2b4 
 		"b9c7",//h2e2 
 		"h9f8",//h0g2 
@@ -526,7 +526,7 @@ void playing()
 	};
 	for (int i = 0; i < 9; ++i)
 	{
-		moveChess(order[i]);
+		moveChess(String(order[i]));
 		delay(5000);
 	}
 }
