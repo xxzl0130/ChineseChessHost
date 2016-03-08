@@ -7,7 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Slave", "Slave\Slave.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Host", "Host\ChineseChessHost.vcxproj", "{803780DF-A02B-4C9A-8C09-8242E0EA1CE4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Slave2", "Slave2\Slave2.vcxproj", "{156F3CAD-D65C-4A27-AA09-B54E241F12D1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Slave2\Slave2.vcxproj", "{156F3CAD-D65C-4A27-AA09-B54E241F12D1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

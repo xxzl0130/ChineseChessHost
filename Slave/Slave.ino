@@ -826,5 +826,15 @@ void playAudio(char Filename[])
 Point<float> getAvailableRecycleBin()
 {
 	Point<float> bin;
+	static uchr list[10] = { 0 };
+	for (int i = 0; i < 10;++i)
+	{
+		if(list[i] < 2)
+		{
+			++list[i];
+			bin.y = boxWidth * (i + 1);
+			bin.x = boardLength + boxWidth;
+		}
+	}
 	return bin;
 }

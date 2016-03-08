@@ -15,11 +15,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Slave2.ino" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="__vm\.Slave2.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Slave\StepperMotor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Test.ino" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Slave\StepperMotor.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

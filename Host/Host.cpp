@@ -22,7 +22,6 @@ HANDLE hScreen;
 SECURITY_ATTRIBUTES sa;
 STARTUPINFO engineInfo;
 PROCESS_INFORMATION engineProcess;
-
 /*
 向引擎发送信息
 */
@@ -92,6 +91,7 @@ void initSerial(string port, uint baud)
 		cout << __LINE__ << ":";
 		goto serialErr;
 	}
+	cout << "串口初始化成功。" << endl;
 	return;
 	/*
 	// 向从机发送握手信息
@@ -157,22 +157,32 @@ inline void send2Engine(string& msg)
 
 bool readOrderFromEngine(char* buf, size_t size)
 {
+	char *ptr;
+	char order[50];
 	// 从引擎不断读入
 	while(ReadFile(hPipeOutputRead, buf, size, nullptr, nullptr))
 	{
-		if(strstr(buf,"bestmove") != nullptr)
+		// 设置文字颜色
+		SetConsoleTextAttribute(hScreen, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+		// 输出信息
+		cout << buf;
+		if((ptr = strstr(buf,"bestmove")) != nullptr)
 		{
+			memset(order, 0,sizeof(order));
+			// 将bestmove那一整行复制出来
+			memcpy_s(order, sizeof(order), ptr, strchr(ptr, '\n') - ptr);
+			// 再复制回buf
+			strcpy_s(buf, strlen(order), order);
 			// 找到bestmove后退出
 			return true;
 		}
-		Sleep(100);
+		Sleep(500);
 	}
 	return false;
 }
 
 void slave2Engine()
 {
-	string tmp;
 	while(true)
 	{
 		try
@@ -180,8 +190,14 @@ void slave2Engine()
 			// 如果从机发送了信息
 			if (slave.available())
 			{
+				string tmp;
 				// 读一整行
 				slave.readline(tmp);
+				if(tmp[tmp.length() - 1] != '\n')
+				{
+					// 保证有换行
+					tmp += "\n";
+				}
 				// 发送至引擎
 				send2Engine(tmp);
 				// 设置文字颜色
@@ -216,10 +232,6 @@ void engine2Slave()
 			{
 				// 向引擎发送信息
 				slave.write(reinterpret_cast<unsigned char*>(buf), strlen(buf));
-				// 设置文字颜色
-				SetConsoleTextAttribute(hScreen,FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
-				// 输出信息
-				cout << buf;
 			}
 		}
 		catch (exception& err)
