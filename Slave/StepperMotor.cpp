@@ -7,6 +7,7 @@ void StepperMotor::OneStep() const
 	digitalWrite(pulsePin, HIGH);
 	delayMicroseconds(pulseTime);
 	digitalWrite(pulsePin, LOW);
+	delayMicroseconds(pulseTime);
 }
 
 StepperMotor::StepperMotor(uchr pPin, uchr dPin, uint step) :
@@ -18,7 +19,7 @@ StepperMotor::StepperMotor(uchr pPin, uchr dPin, uint step) :
 	digitalWrite(dirPin, LOW);
 }
 
-void StepperMotor::run(Direction dir, uint step, uint freq)
+void StepperMotor::run(Direction dir, uint step, uint dely)
 {
 	setDirection(dir);
 	if (dir == FORWORD)
@@ -28,7 +29,7 @@ void StepperMotor::run(Direction dir, uint step, uint freq)
 	while (step--)
 	{
 		OneStep();
-		delayMicroseconds(10000000L / freq - pulseTime);
+		delayMicroseconds(dely);
 	}
 }
 

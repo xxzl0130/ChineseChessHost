@@ -13,8 +13,8 @@
 
 enum Direction
 {
-	BACKWORD = 0,
-	FORWORD = 1
+	FORWORD = 0,
+	BACKWORD = 1
 };
 
 class StepperMotor
@@ -29,21 +29,20 @@ private:
 	// 脉冲时长(us)
 	const static uchr pulseTime = 10;
 
-	// 步进电机转动一步
-	void OneStep() const;
-
 public:
 	/*
 	构造函数，进行IO口的初始化，数据的初始化
 	*/
 	StepperMotor(uchr pPin, uchr dPin, uint step);
+	// 步进电机转动一步
+	void OneStep() const;
 	/*
 	步进电机转动
 	参数0 Dir  转动方向
 	参数1 Step 转动步数
-	[参数2 freq] 转动频率
+	[参数2 dely] 延时(us)
 	*/
-	void run(Direction dir, uint step, uint freq = 1000);
+	void run(Direction dir, uint step, uint dely = 50);
 	/*
 	步进电机转动
 	参数0 Step 转动步数, 正负代表正反转
@@ -75,7 +74,7 @@ public:
 		digitalWrite(dirPin, dir == FORWORD ? HIGH : LOW);
 	}
 
-	uint getStepPerCircle()
+	uint getStepPerCircle() const
 	{
 		return StepPreCircle;
 	}

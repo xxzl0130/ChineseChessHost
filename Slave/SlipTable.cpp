@@ -41,19 +41,19 @@ void SlipTable::move(float x, float y)
 	/*
 	软限位
 	*/
-	if(x < 0.0)
+	if (x < 0.0)
 	{
 		x = 0.0;
 	}
-	else if(x > xLength)
+	else if (x > xLength)
 	{
 		x = xLength;
 	}
-	if(y < 0.0)
+	if (y < 0.0)
 	{
 		y = 0.0;
 	}
-	else if(y > yLength)
+	else if (y > yLength)
 	{
 		y = yLength;
 	}
@@ -68,19 +68,26 @@ void SlipTable::move(float x, float y)
 	// 以实际走的步数计算位置，避免累积误差
 	pos.x += xAxisToGo * LengthPerStep * (xDir == FORWORD ? 1 : -1);
 	pos.y += yAxisToGo * LengthPerStep * (yDir == FORWORD ? 1 : -1);
-	while (xAxisToGo || yAxisToGo)
+	// 设置方向
+	xAxis.setDirection(xDir);
+	yAxis.setDirection(yDir);
+	while (xAxisToGo && yAxisToGo)
 	{
 		// 两轴交替运动
 		// 速度快时近似为两轴同步运动
-		if (xAxisToGo)
-		{
-			xAxis.run(xDir, 1);
-			--xAxisToGo;
-		}
-		if (yAxisToGo)
-		{
-			yAxis.run(yDir, 1);
-			--yAxisToGo;
-		}
+		xAxis.OneStep();
+		--xAxisToGo;
+		yAxis.run(yDir, 1);
+		--yAxisToGo;
+		delayMicroseconds(30);
+	}
+	// 将剩余步数走完
+	if (xAxisToGo)
+	{
+		xAxis.run(xDir, xAxisToGo, 50);
+	}
+	if(yAxisToGo)
+	{
+		yAxis.run(yDir, yAxisToGo, 50);
 	}
 }

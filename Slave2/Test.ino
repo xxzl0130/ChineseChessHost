@@ -9,6 +9,8 @@ void setup()
 	pinMode(pulsePin, OUTPUT);
 	pinMode(dirPin, OUTPUT);
 	pinMode(enPin, OUTPUT);
+	digitalWrite(enPin, HIGH);
+	pinMode(13, OUTPUT);
 }
 
 inline void setDir(unsigned char dir)
@@ -21,6 +23,7 @@ void step1()
 	digitalWrite(pulsePin, HIGH);
 	delayMicroseconds(10);
 	digitalWrite(pulsePin, LOW);
+	delayMicroseconds(10);
 }
 
 void step2()
@@ -31,14 +34,14 @@ void step2()
 
 void loop()
 {
-	for (int i = 0; i < 100;++i)
+	setDir(HIGH);
+	digitalWrite(13, HIGH);
+	for (int i = 0; i < 6400;++i)
 	{
 		step1();
-		delay(10);
+		//delay(30);
+		delayMicroseconds(50);
 	}
-	for (int i = 0; i < 10;++i)
-	{
-		step2();
-		delay(10);
-	}
+	digitalWrite(13, LOW);
+	delay(1000);
 }
