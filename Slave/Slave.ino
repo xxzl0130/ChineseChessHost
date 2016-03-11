@@ -60,15 +60,13 @@ uchr resignCnt;
 DIFFICULTY diff = easy;
 // 游戏状态
 GameState gameState = Play;
-// 步进电机
-StepperMotor xAxisMotor(4, 5, circleStep), yAxisMotor(6, 7, circleStep);
 // 滑台
-SlipTable table(xAxisMotor, yAxisMotor,
+SlipTable table(StepperMotor(6, 7, circleStep), StepperMotor(8, 9, circleStep),
 	boardLength, boardWidth, 46, 47, 48, 49, pitch);
 // 升降台
-StepperMotor upDownMotor(8, 9, circleStep);
+StepperMotor upDownMotor(10, 11, circleStep);
 // 电磁铁
-#define upMagnet 10
+#define upMagnet 49
 
 // 检测拿起棋子
 bool detectPickUpChess();
@@ -117,7 +115,6 @@ void initPin();
 // 初始化SDPlayer
 void initSDPlayer();
 // 移动棋子
-void moveChess(char order[4]);
 void moveChess(String order);
 // 播放音乐
 void playAudio(char Filename[]);
@@ -130,7 +127,7 @@ void setup()
 {
 	initPin();
 	//initLCD();
-	//initSerial();
+	initSerial();
 	//initBoard();
 	//while (true);
 }
@@ -144,14 +141,10 @@ void loop()
 	reset();
 	*/
 	static uchr flag = 0;
-	digitalWrite(ledPin, flag);
-	xAxisMotor.run((flag ^= 1) ? FORWORD : BACKWORD, 1600, 50);
-	/*for (int i = 0; i < 1600;++i)
-	{
-		xAxisMotor.OneStep();
-		delayMicroseconds(50);
-	}*/
-	
+	/*float pos[2][2] = { 0,0,50,50 };
+	table.move(pos[flag][0], pos[flag][1]);*/
+	playing();
+	digitalWrite(ledPin, flag ^= 1);
 	delay(1000);
 }
 
@@ -530,21 +523,20 @@ void start()
 	selectDiff();
 	selectOrder();
 }
-
+// 预先设定好的走法
+char order[10][5] = {
+	"g9e7",//b2b4 
+	"b9c7",//h2e2 
+	"h9f8",//h0g2 
+	"c6c5",//i0h0 
+	"g6g5",//b0a2 
+	"b7b0",//a0b0 
+	"g5g4",//a2b0 
+	"a9b9",//g3g4 
+	"c5c4" //b4c4 
+};
 void playing()
 {
-	// 预先设定好的走法
-	char order[10][5] = {
-		"g9e7",//b2b4 
-		"b9c7",//h2e2 
-		"h9f8",//h0g2 
-		"c6c5",//i0h0 
-		"g6g5",//b0a2 
-		"b7b0",//a0b0 
-		"g5g4",//a2b0 
-		"a9b9",//g3g4 
-		"c5c4" //b4c4 
-	};
 	for (int i = 0; i < 9; ++i)
 	{
 		digitalWrite(ledPin, i & 1);
@@ -705,7 +697,14 @@ bool initSerial()
 	// 初始化与Host通信
 	comSer.begin(generalBaudRate);
 	if (!comSer)
+	{
+		digitalWrite(ledPin, HIGH);
+		delay(1000);
 		return false;
+	}
+#ifdef DEBUG
+	comSer.println("Hello");
+#endif
 	/*while (!comSer.available());
 	for (uchr i = 0; i < 3; ++i)
 	{
@@ -781,17 +780,34 @@ void initSDPlayer()
 	SdPlay.init(AudioMode);
 }
 
-void moveChess(char order[4])
+void moveChess(String order)
 {
 	Point<float> scr, dst;
 	// 棋子坐标
 	scr = getChessPos(order[0], order[1]);
 	// 目标坐标
 	dst = getChessPos(order[2], order[3]);
-	if (board[9 - (order[3] - '0')][order[2] - 'a'] != 'b')
+#ifdef DEBUG
+	comSer.println(order);
+	comSer.print("(");
+	comSer.print(scr.x);
+	comSer.print(",");
+	comSer.print(scr.y);
+	comSer.print("),");
+	comSer.print("(");
+	comSer.print(dst.x);
+	comSer.print(",");
+	comSer.print(dst.y);
+	comSer.print(")\n");
+#endif
+	if (board[9 - (order[3] - '0')][order[2] - 'a'] != b)
 	{
 		// 目标处有子，即要吃子
 		// 先移动到弃子处
+#ifdef DEBUG
+		comSer.print("eat");
+		comSer.println(board[9 - (order[3] - '0')][order[2] - 'a']);
+#endif
 		table.move(dst);
 		digitalWrite(upMagnet, HIGH);
 		table.move(getAvailableRecycleBin());
@@ -801,11 +817,9 @@ void moveChess(char order[4])
 	digitalWrite(upMagnet, HIGH);
 	table.move(dst);
 	digitalWrite(upMagnet, LOW);
-}
-
-void moveChess(String order)
-{
-	moveChess(order.c_str());
+#ifdef DEBUG
+	comSer.println("done");
+#endif
 }
 
 void playAudio(char Filename[])
@@ -838,7 +852,7 @@ Point<float> getAvailableRecycleBin()
 
 Point<float> getChessPos(char col, char row)
 {
-	Point<float> pos(boardWidth, boardWidth);
+	Point<float> pos(xAxisStart, yAxisStart);
 	int _col = col - 'a', _row = row - '0';
 	pos.x += _col * boxWidth;
 	pos.y += _row * boxLength;

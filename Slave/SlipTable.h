@@ -34,8 +34,6 @@ public:
 class SlipTable
 {
 private:
-	// 两轴的步进电机
-	StepperMotor xAxis, yAxis;
 	// 位置信息
 	Point<float> pos;
 	// 尺寸 单位mm
@@ -47,6 +45,8 @@ private:
 	// 每步长度
 	float LengthPerStep;
 public:
+	// 两轴的步进电机
+	StepperMotor xAxis, yAxis;
 	/*
 	构造函数，进行IO口的初始化，数据的初始化
 	*/

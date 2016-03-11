@@ -2,8 +2,8 @@
 #include <Arduino.h>
 
 SlipTable::SlipTable(StepperMotor x, StepperMotor y, ulong xLen, ulong yLen, uchr xS1, uchr xS2, uchr yS1, uchr yS2, float sP)
-	:xAxis(x),yAxis(y),pos(0,0),xLength(xLen),yLength(yLen),
-	xSwitch1(xS1), xSwitch2(xS2),ySwitch1(yS1), ySwitch2(yS2),screwPitch(sP)
+	:pos(0,0),xLength(xLen),yLength(yLen),xSwitch1(xS1),xSwitch2(xS2),
+	ySwitch1(yS1), ySwitch2(yS2),screwPitch(sP), xAxis(x),yAxis(y)
 {
 	pinMode(xSwitch1, INPUT_PULLUP);
 	pinMode(xSwitch2, INPUT_PULLUP);
