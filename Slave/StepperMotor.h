@@ -27,7 +27,7 @@ private:
 	// 细分格数
 	uint StepPreCircle;
 	// 脉冲时长(us)
-	const static uchr pulseTime = 10;
+	const static uchr pulseTime = 20;
 
 public:
 	/*
@@ -46,9 +46,9 @@ public:
 	/*
 	步进电机转动
 	参数0 Step 转动步数, 正负代表正反转
-	[参数2 freq] 转动频率
+	[参数2 dely] 延时(us)
 	*/
-	void run(int step, uint freq = 1000);
+	void run(int step, uint dely = 50);
 
 	// 获得当前位置
 	uint getPos() const

@@ -42,7 +42,7 @@ Chess board[BoardRow][BoardCol] = {
 	{ b,C,b,b,b,b,b,C,b },// 2    |       7
 	{ b,b,b,b,b,b,b,b,b },// 1    |       8
 	{ R,H,E,A,K,A,E,H,R } // 0    |       9
-						  //    a b c d e f g h i
+//    a b c d e f g h i
 };
 // 玩家当前拿在手里的子，0为自己的子，1为电脑的子
 ChessPoint chessHold[2];
@@ -60,9 +60,15 @@ uchr resignCnt;
 DIFFICULTY diff = easy;
 // 游戏状态
 GameState gameState = Play;
+// 步进电机
+StepperMotor xAxisMotor(4, 5, circleStep), yAxisMotor(6, 7, circleStep);
 // 滑台
-SlipTable table(StepperMotor(46, 47, circleStep), StepperMotor(48, 49, circleStep),
-	boardLength, boardWidth, 50, 51, 52, 53, pitch);
+SlipTable table(xAxisMotor, yAxisMotor,
+	boardLength, boardWidth, 46, 47, 48, 49, pitch);
+// 升降台
+StepperMotor upDownMotor(8, 9, circleStep);
+// 电磁铁
+#define upMagnet 10
 
 // 检测拿起棋子
 bool detectPickUpChess();
@@ -117,22 +123,36 @@ void moveChess(String order);
 void playAudio(char Filename[]);
 // 返回一个可用的弃子区域
 Point<float> getAvailableRecycleBin();
+// 计算棋子的坐标
+Point<float> getChessPos(char col, char row);
 
 void setup()
 {
 	initPin();
 	//initLCD();
-	initSerial();
+	//initSerial();
 	//initBoard();
-	while (true);
+	//while (true);
 }
 
 void loop()
 {
+	/*
 	waitStart();
 	start();
 	playing();
 	reset();
+	*/
+	static uchr flag = 0;
+	digitalWrite(ledPin, flag);
+	xAxisMotor.run((flag ^= 1) ? FORWORD : BACKWORD, 1600, 50);
+	/*for (int i = 0; i < 1600;++i)
+	{
+		xAxisMotor.OneStep();
+		delayMicroseconds(50);
+	}*/
+	
+	delay(1000);
 }
 
 bool detectPickUpChess()
@@ -364,8 +384,7 @@ void waitStart()
 			break;
 		}
 	}
-	selectDiff();
-	selectOrder();
+	
 }
 
 void selectDiff()
@@ -508,6 +527,8 @@ void selectOrder()
 
 void start()
 {
+	selectDiff();
+	selectOrder();
 }
 
 void playing()
@@ -526,6 +547,7 @@ void playing()
 	};
 	for (int i = 0; i < 9; ++i)
 	{
+		digitalWrite(ledPin, i & 1);
 		moveChess(String(order[i]));
 		delay(5000);
 	}
@@ -684,7 +706,7 @@ bool initSerial()
 	comSer.begin(generalBaudRate);
 	if (!comSer)
 		return false;
-	while (!comSer.available());
+	/*while (!comSer.available());
 	for (uchr i = 0; i < 3; ++i)
 	{
 		tmp = comSer.readString();
@@ -698,7 +720,7 @@ bool initSerial()
 		delay(100);
 	}
 	// 初始化与Slave2通信
-	/*
+	
 	Serial2.begin(generalBaudRate);
 	if (!Serial2)
 	return false;
@@ -740,6 +762,8 @@ void initPin()
 	pinMode(EndKey, INPUT_PULLUP);
 	pinMode(LeftKey, INPUT_PULLUP);
 	pinMode(RightKey, INPUT_PULLUP);
+	pinMode(upMagnet, OUTPUT);
+	digitalWrite(upMagnet, LOW);
 	for (char i = 0; i <= RowCnt; ++i)
 	{
 		pinMode(RowStart + i, OUTPUT);
@@ -761,24 +785,22 @@ void moveChess(char order[4])
 {
 	Point<float> scr, dst;
 	// 棋子坐标
-	scr.x = xAxisStart + (order[0] - 'a') * boxWidth;
-	scr.y = yAxisStart + (order[1] - '0') * boxWidth;
+	scr = getChessPos(order[0], order[1]);
 	// 目标坐标
-	dst.x = xAxisStart + (order[2] - 'a') * boxWidth;
-	dst.y = yAxisStart + (order[3] - '0') * boxWidth;
+	dst = getChessPos(order[2], order[3]);
 	if (board[9 - (order[3] - '0')][order[2] - 'a'] != 'b')
 	{
 		// 目标处有子，即要吃子
 		// 先移动到弃子处
 		table.move(dst);
-		// todo:拿起棋子
+		digitalWrite(upMagnet, HIGH);
 		table.move(getAvailableRecycleBin());
-		// todo:放下弃子
+		digitalWrite(upMagnet, LOW);
 	}
 	table.move(scr);
-	// todo:拿起棋子
+	digitalWrite(upMagnet, HIGH);
 	table.move(dst);
-	// todo:放下棋子
+	digitalWrite(upMagnet, LOW);
 }
 
 void moveChess(String order)
@@ -812,4 +834,18 @@ Point<float> getAvailableRecycleBin()
 		}
 	}
 	return bin;
+}
+
+Point<float> getChessPos(char col, char row)
+{
+	Point<float> pos(boardWidth, boardWidth);
+	int _col = col - 'a', _row = row - '0';
+	pos.x += _col * boxWidth;
+	pos.y += _row * boxLength;
+	if(_row > 4)
+	{
+		// 楚河另一侧 加上楚河宽度
+		pos.y += riverWidth - boxLength;
+	}
+	return pos;
 }

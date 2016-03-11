@@ -33,10 +33,10 @@ void StepperMotor::run(Direction dir, uint step, uint dely)
 	}
 }
 
-void StepperMotor::run(int step, uint freq)
+void StepperMotor::run(int step, uint dely)
 {
 	if (step > 0)
-		run(FORWORD, step, freq);
+		run(FORWORD, step, dely);
 	else
-		run(BACKWORD, -step, freq);
+		run(BACKWORD, -step, dely);
 }

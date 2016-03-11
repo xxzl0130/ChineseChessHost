@@ -79,7 +79,7 @@ void SlipTable::move(float x, float y)
 		--xAxisToGo;
 		yAxis.run(yDir, 1);
 		--yAxisToGo;
-		delayMicroseconds(30);
+		delayMicroseconds(50);
 	}
 	// 将剩余步数走完
 	if (xAxisToGo)
