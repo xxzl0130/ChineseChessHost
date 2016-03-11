@@ -127,4 +127,7 @@ public:
 #define xAxisStart		20
 // 棋盘起始纵坐标
 #define yAxisStart		20
+// 屏蔽跳线
+#define jumpPinA		46
+#define jumpPinB		47
 #endif // __SLAVE_DEF_H__

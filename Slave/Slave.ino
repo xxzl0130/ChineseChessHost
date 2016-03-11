@@ -129,7 +129,13 @@ void setup()
 	//initLCD();
 	initSerial();
 	//initBoard();
-	//while (true);
+	// 跳线联通则不进行运动
+	uchr flag = 0;
+	while (digitalRead(jumpPinB) == LOW)
+	{
+		digitalWrite(ledPin, flag ^= 1);
+		delay(300);
+	}
 }
 
 void loop()
@@ -523,20 +529,21 @@ void start()
 	selectDiff();
 	selectOrder();
 }
-// 预先设定好的走法
-char order[10][5] = {
-	"g9e7",//b2b4 
-	"b9c7",//h2e2 
-	"h9f8",//h0g2 
-	"c6c5",//i0h0 
-	"g6g5",//b0a2 
-	"b7b0",//a0b0 
-	"g5g4",//a2b0 
-	"a9b9",//g3g4 
-	"c5c4" //b4c4 
-};
+
 void playing()
 {
+	// 预先设定好的走法
+	char order[10][5] = {
+		"g9e7",//b2b4 
+		"b9c7",//h2e2 
+		"h9f8",//h0g2 
+		"c6c5",//i0h0 
+		"g6g5",//b0a2 
+		"b7b0",//a0b0 
+		"g5g4",//a2b0 
+		"a9b9",//g3g4 
+		"c5c4" //b4c4 
+	};
 	for (int i = 0; i < 9; ++i)
 	{
 		digitalWrite(ledPin, i & 1);
@@ -762,6 +769,10 @@ void initPin()
 	pinMode(LeftKey, INPUT_PULLUP);
 	pinMode(RightKey, INPUT_PULLUP);
 	pinMode(upMagnet, OUTPUT);
+	pinMode(jumpPinA, OUTPUT);
+	// 输出低电平，如果跳线联通则B也为低电平
+	pinMode(jumpPinB, INPUT_PULLUP);
+	digitalWrite(jumpPinA, LOW);
 	digitalWrite(upMagnet, LOW);
 	for (char i = 0; i <= RowCnt; ++i)
 	{
