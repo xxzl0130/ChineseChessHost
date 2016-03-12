@@ -124,9 +124,9 @@ public:
 // 楚河汉界宽度
 #define riverWidth		24
 // 棋盘起始横坐标
-#define xAxisStart		20
+#define xAxisStart		15
 // 棋盘起始纵坐标
-#define yAxisStart		20
+#define yAxisStart		15
 // 屏蔽跳线
 #define jumpPinA		46
 #define jumpPinB		47

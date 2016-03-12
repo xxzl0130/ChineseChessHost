@@ -9,7 +9,7 @@ SlipTable::SlipTable(StepperMotor x, StepperMotor y, ulong xLen, ulong yLen, uch
 	pinMode(xSwitch2, INPUT_PULLUP);
 	pinMode(ySwitch1, INPUT_PULLUP);
 	pinMode(xSwitch2, INPUT_PULLUP);
-	LengthPerStep = screwPitch / xAxis.getStepPerCircle();
+	LengthPerStep = screwPitch / static_cast<float>(xAxis.getStepPerCircle());
 }
 
 Point<float> SlipTable::getPos() const
@@ -61,13 +61,20 @@ void SlipTable::move(float x, float y)
 	ulong xAxisToGo = abs(x - pos.x) / LengthPerStep + 0.5;
 	// y轴要移动的步数
 	ulong yAxisToGo = abs(y - pos.y) / LengthPerStep + 0.5;
+	Serial.print(xAxisToGo);
+	Serial.print(",");
+	Serial.print(yAxisToGo);
 	// x轴方向
-	Direction xDir = x > pos.x ? FORWORD : BACKWORD;
+	Direction xDir = x < pos.x ? FORWORD : BACKWORD;
 	// y轴方向
-	Direction yDir = y > pos.y ? FORWORD : BACKWORD;
+	Direction yDir = y < pos.y ? FORWORD : BACKWORD;
+	pos.x = x;
+	pos.y = y;
+	/*
 	// 以实际走的步数计算位置，避免累积误差
 	pos.x += xAxisToGo * LengthPerStep * (xDir == FORWORD ? 1 : -1);
 	pos.y += yAxisToGo * LengthPerStep * (yDir == FORWORD ? 1 : -1);
+	*/
 	// 设置方向
 	xAxis.setDirection(xDir);
 	yAxis.setDirection(yDir);
@@ -90,4 +97,9 @@ void SlipTable::move(float x, float y)
 	{
 		yAxis.run(yDir, yAxisToGo, 50);
 	}
+	Serial.print(",(");
+	Serial.print(pos.x);
+	Serial.print(",");
+	Serial.print(pos.y);
+	Serial.println(")");
 }

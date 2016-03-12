@@ -122,6 +122,8 @@ void playAudio(char Filename[]);
 Point<float> getAvailableRecycleBin();
 // 计算棋子的坐标
 Point<float> getChessPos(char col, char row);
+// 修改棋盘记录
+void modifyBoard(Chess board[BoardRow][BoardCol], String order);
 
 void setup()
 {
@@ -151,6 +153,11 @@ void loop()
 	table.move(pos[flag][0], pos[flag][1]);*/
 	playing();
 	digitalWrite(ledPin, flag ^= 1);
+	/*if (comSer.available())
+	{
+		String order = comSer.readString();
+		moveChess(order);
+	}*/
 	delay(1000);
 }
 
@@ -533,21 +540,22 @@ void start()
 void playing()
 {
 	// 预先设定好的走法
-	char order[10][5] = {
-		"g9e7",//b2b4 
-		"b9c7",//h2e2 
-		"h9f8",//h0g2 
-		"c6c5",//i0h0 
-		"g6g5",//b0a2 
-		"b7b0",//a0b0 
-		"g5g4",//a2b0 
-		"a9b9",//g3g4 
-		"c5c4" //b4c4 
+	char order[10][2][5] = {
+		"b2b4","g9e7",
+		"h2e2","b9c7",
+		"h0g2","h9f8",
+		"i0h0","c6c5",
+		"b0a2","g6g5",
+		"a0b0","b7b0",
+		"a2b0","g5g4",
+		"g3g4","a9b9",
+		"b4c4","c5c4"
 	};
 	for (int i = 0; i < 9; ++i)
 	{
 		digitalWrite(ledPin, i & 1);
-		moveChess(String(order[i]));
+		modifyBoard(board, String(order[i][0]));
+		moveChess(String(order[i][1]));
 		delay(5000);
 	}
 }
@@ -816,8 +824,8 @@ void moveChess(String order)
 		// 目标处有子，即要吃子
 		// 先移动到弃子处
 #ifdef DEBUG
-		comSer.print("eat");
-		comSer.println(board[9 - (order[3] - '0')][order[2] - 'a']);
+		comSer.print("eat ");
+		comSer.println(static_cast<char>(board[9 - (order[3] - '0')][order[2] - 'a']));
 #endif
 		table.move(dst);
 		digitalWrite(upMagnet, HIGH);
@@ -826,8 +834,10 @@ void moveChess(String order)
 	}
 	table.move(scr);
 	digitalWrite(upMagnet, HIGH);
+	delay(5000);
 	table.move(dst);
 	digitalWrite(upMagnet, LOW);
+	modifyBoard(board, order);
 #ifdef DEBUG
 	comSer.println("done");
 #endif
@@ -847,7 +857,7 @@ void playAudio(char Filename[])
 
 Point<float> getAvailableRecycleBin()
 {
-	Point<float> bin;
+	/*Point<float> bin;
 	static uchr list[10] = { 0 };
 	for (int i = 0; i < 10; ++i)
 	{
@@ -858,13 +868,14 @@ Point<float> getAvailableRecycleBin()
 			bin.x = boardLength + boxWidth;
 		}
 	}
-	return bin;
+	return bin;*/
+	return Point<float>(0, 0);
 }
 
 Point<float> getChessPos(char col, char row)
 {
 	Point<float> pos(xAxisStart, yAxisStart);
-	int _col = col - 'a', _row = row - '0';
+	int _col = col - 'a', _row = 9 - (row - '0');
 	pos.x += _col * boxWidth;
 	pos.y += _row * boxLength;
 	if(_row > 4)
@@ -873,4 +884,10 @@ Point<float> getChessPos(char col, char row)
 		pos.y += riverWidth - boxLength;
 	}
 	return pos;
+}
+
+inline void modifyBoard(Chess board[10][9], String order)
+{
+	board[9 - (order[3] - '0')][order[2] - 'a'] = board[9 - (order[1] - '0')][order[0] - 'a'];
+	board[9 - (order[1] - '0')][order[0] - 'a'] = b;
 }
