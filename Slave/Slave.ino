@@ -65,8 +65,6 @@ SlipTable table(StepperMotor(6, 7, circleStep), StepperMotor(8, 9, circleStep),
 	boardLength, boardWidth, 46, 47, 48, 49, pitch);
 // 升降台
 StepperMotor upDownMotor(10, 11, circleStep);
-// 电磁铁
-#define upMagnet 49
 
 // 检测拿起棋子
 bool detectPickUpChess();
@@ -128,7 +126,7 @@ void modifyBoard(Chess board[BoardRow][BoardCol], String order);
 void setup()
 {
 	initPin();
-	//initLCD();
+	initLCD();
 	initSerial();
 	//initBoard();
 	// 跳线联通则不进行运动
@@ -142,23 +140,10 @@ void setup()
 
 void loop()
 {
-	/*
 	waitStart();
 	start();
 	playing();
 	reset();
-	*/
-	static uchr flag = 0;
-	/*float pos[2][2] = { 0,0,50,50 };
-	table.move(pos[flag][0], pos[flag][1]);*/
-	playing();
-	digitalWrite(ledPin, flag ^= 1);
-	/*if (comSer.available())
-	{
-		String order = comSer.readString();
-		moveChess(order);
-	}*/
-	delay(1000);
 }
 
 bool detectPickUpChess()
@@ -539,24 +524,47 @@ void start()
 
 void playing()
 {
-	// 预先设定好的走法
-	char order[10][2][5] = {
-		"b2b4","g9e7",
-		"h2e2","b9c7",
-		"h0g2","h9f8",
-		"i0h0","c6c5",
-		"b0a2","g6g5",
-		"a0b0","b7b0",
-		"a2b0","g5g4",
-		"g3g4","a9b9",
-		"b4c4","c5c4"
-	};
-	for (int i = 0; i < 9; ++i)
+	while (true)
 	{
-		digitalWrite(ledPin, i & 1);
-		modifyBoard(board, String(order[i][0]));
-		moveChess(String(order[i][1]));
-		delay(5000);
+		// 求和
+		if (isPress(StartKey, LOW))
+		{
+			draw(false);
+		}
+		// 认输
+		if (isPress(EndKey, LOW))
+		{
+			resign(false);
+		}
+		switch (gameState)
+		{
+			/*
+			先列好各种情况，等待完善
+			*/
+		case Play:
+			detectPickUpChess();
+			break;
+		case PlayerHoldHis:case PlayerHoldOpp:case PlayerHoldTwo:
+			detectPutDownChess();
+			break;
+		case MoveDone:
+			sendBoard(board);
+			gameState = WaitOrder;
+			break;
+		case WaitOrder:
+			if (comSer.available())
+			{
+				tmp = readOrderFromHost();
+				executeOrder(tmp);
+			}
+			gameState = Play;
+			break;
+		case Win:case Lose:case Draw:case Resign:
+			// 这4个状态是已经进入gameOver的，所以结束本函数
+			return;
+		default:
+			break;
+		}
 	}
 }
 
@@ -857,7 +865,7 @@ void playAudio(char Filename[])
 
 Point<float> getAvailableRecycleBin()
 {
-	/*Point<float> bin;
+	Point<float> bin;
 	static uchr list[10] = { 0 };
 	for (int i = 0; i < 10; ++i)
 	{
@@ -868,8 +876,8 @@ Point<float> getAvailableRecycleBin()
 			bin.x = boardLength + boxWidth;
 		}
 	}
-	return bin;*/
-	return Point<float>(0, 0);
+	return bin;
+	//return Point<float>(0, 0);
 }
 
 Point<float> getChessPos(char col, char row)
@@ -886,7 +894,7 @@ Point<float> getChessPos(char col, char row)
 	return pos;
 }
 
-inline void modifyBoard(Chess board[10][9], String order)
+inline void modifyBoard(Chess board[BoardRow][BoardCol], String order)
 {
 	board[9 - (order[3] - '0')][order[2] - 'a'] = board[9 - (order[1] - '0')][order[0] - 'a'];
 	board[9 - (order[1] - '0')][order[0] - 'a'] = b;

@@ -1,0 +1,77 @@
+# PinList
+# 本项目中的Arduino Mega 2560的GPIO Pins使用情况
+
+Pin		用途
+# 数字接口
+0		TX0
+1		RX0
+2		StartKey
+3		EndKey
+4		LeftKey
+5		RightKey
+6		StepperMotor1 pulsePin
+7		StepperMotor1 dirPin
+8		StepperMotor2 pulsePin
+9		StepperMotor2 dirPin
+10		StepperMotor3 pulsePin
+11		StepperMotor3 dirPin
+12		upMagnet
+13		LED
+14		TX3/not used
+15		RX3/not used
+16		TX2/not used
+17		RX2/not used
+18		TX1/Bluetooth
+19		RX1/Bluetooth
+20		SDA/LCD1602
+21		SCL/LCD1602
+22		RowStart + 0
+23		RowStart + 1
+24		RowStart + 2
+25		RowStart + 3
+26		RowStart + 4
+27		RowStart + 5
+28		RowStart + 6
+29		RowStart + 7
+30		RowStart + 8
+31		RowStart + 9
+32		ColStart + 0
+33		ColStart + 1
+34		ColStart + 2
+35		ColStart + 3
+36		ColStart + 4
+37		ColStart + 5
+38		ColStart + 6
+39		ColStart + 7
+40		ColStart + 8
+41		none
+42		none
+43		none
+44		LeftAudio
+45		RightAudio
+46		jumpPinA
+47		jumpPinB
+48		none
+49		none
+50		MISO
+51		MOSI
+52		SCK
+53		CS
+
+# 模拟接口
+A0		none
+A1		none
+A2		none
+A3		none
+A4		none
+A5		none
+A6		none
+A7		none
+A8		none
+A9		none
+A10		none
+A11		none
+A12		none
+A13		none
+A14		none
+A15		none

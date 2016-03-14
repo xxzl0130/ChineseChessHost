@@ -2,7 +2,6 @@
 #define __SLAVE_DEF_H__
 
 #include "CommonDef.h"
-#include "SimpleSDAudio/SimpleSDAudio.h"
 
 // 缓冲区最大大小(256B)
 #define MAX_BUF_SIZE (256)
@@ -10,14 +9,16 @@
 // LED针脚
 #define ledPin 13
 
-// 开始/求和按键 int.0 上拉
+// 开始/求和按键 上拉
 #define StartKey	2
-// 结束/认输按键 int.1 上拉
+// 结束/认输按键 上拉
 #define EndKey		3
 // 左按键 上拉
 #define LeftKey		4
 // 右按键 上拉
 #define RightKey	5
+// 电磁铁
+#define upMagnet 12
 
 // 棋盘行引脚起始口
 #define RowStart	22
@@ -40,6 +41,10 @@
 #define RightAudio	45
 // 音频模式 全速率&双声道
 #define AudioMode	(SSDA_MODE_FULLRATE | SSDA_MODE_STEREO)
+
+// 屏蔽跳线
+#define jumpPinA		46
+#define jumpPinB		47
 
 #ifdef DEBUG
 // 测试使用的串口
@@ -127,7 +132,4 @@ public:
 #define xAxisStart		15
 // 棋盘起始纵坐标
 #define yAxisStart		15
-// 屏蔽跳线
-#define jumpPinA		46
-#define jumpPinB		47
 #endif // __SLAVE_DEF_H__

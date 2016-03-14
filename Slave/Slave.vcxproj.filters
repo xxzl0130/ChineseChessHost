@@ -39,18 +39,23 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MatrixKeyboard.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="StepperMotor.cpp">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SlipTable.cpp">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StepperMotor.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="步进电机接法.jpg">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="PinList.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>
