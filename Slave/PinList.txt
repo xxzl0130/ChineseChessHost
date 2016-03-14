@@ -44,15 +44,15 @@ Pin		”√Õæ
 38		ColStart + 6
 39		ColStart + 7
 40		ColStart + 8
-41		none
-42		none
+41		jumpPinA
+42		jumpPinB
 43		none
 44		LeftAudio
 45		RightAudio
-46		jumpPinA
-47		jumpPinB
-48		none
-49		none
+46		tableSwitch0
+47		tableSwitch1
+48		tableSwitch2
+49		tableSwitch3
 50		MISO
 51		MOSI
 52		SCK

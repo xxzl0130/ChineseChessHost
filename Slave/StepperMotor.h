@@ -71,7 +71,7 @@ public:
 	// 设置转动方向
 	void setDirection(Direction dir) const
 	{
-		digitalWrite(dirPin, dir == FORWORD ? HIGH : LOW);
+		digitalWrite(dirPin, dir == FORWORD ? LOW : HIGH);
 	}
 
 	uint getStepPerCircle() const

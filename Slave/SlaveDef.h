@@ -43,8 +43,8 @@
 #define AudioMode	(SSDA_MODE_FULLRATE | SSDA_MODE_STEREO)
 
 // 屏蔽跳线
-#define jumpPinA		46
-#define jumpPinB		47
+#define jumpPinA		41
+#define jumpPinB		42
 
 #ifdef DEBUG
 // 测试使用的串口
@@ -132,4 +132,7 @@ public:
 #define xAxisStart		15
 // 棋盘起始纵坐标
 #define yAxisStart		15
+// z轴步数
+#define zAxisStep		1600u
+
 #endif // __SLAVE_DEF_H__

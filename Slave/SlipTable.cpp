@@ -1,7 +1,7 @@
 #include "SlipTable.h"
 #include <Arduino.h>
 
-SlipTable::SlipTable(StepperMotor x, StepperMotor y, ulong xLen, ulong yLen, uchr xS1, uchr xS2, uchr yS1, uchr yS2, float sP)
+SlipTable::SlipTable(StepperMotor x, StepperMotor y, double xLen, double yLen, uchr xS1, uchr xS2, uchr yS1, uchr yS2, float sP)
 	:pos(0,0),xLength(xLen),yLength(yLen),xSwitch1(xS1),xSwitch2(xS2),
 	ySwitch1(yS1), ySwitch2(yS2),screwPitch(sP), xAxis(x),yAxis(y)
 {
@@ -9,10 +9,10 @@ SlipTable::SlipTable(StepperMotor x, StepperMotor y, ulong xLen, ulong yLen, uch
 	pinMode(xSwitch2, INPUT_PULLUP);
 	pinMode(ySwitch1, INPUT_PULLUP);
 	pinMode(xSwitch2, INPUT_PULLUP);
-	LengthPerStep = screwPitch / static_cast<float>(xAxis.getStepPerCircle());
+	LengthPerStep = screwPitch / static_cast<double>(xAxis.getStepPerCircle());
 }
 
-Point<float> SlipTable::getPos() const
+Point<double> SlipTable::getPos() const
 {
 	return pos;
 }
@@ -31,12 +31,12 @@ void SlipTable::reset()
 	pos.y = 0.0;
 }
 
-void SlipTable::move(Point<float> pos)
+void SlipTable::move(Point<double> pos)
 {
 	move(pos.x, pos.y);
 }
 
-void SlipTable::move(float x, float y)
+void SlipTable::move(double x, double y)
 {
 	/*
 	软限位
@@ -61,30 +61,31 @@ void SlipTable::move(float x, float y)
 	ulong xAxisToGo = abs(x - pos.x) / LengthPerStep + 0.5;
 	// y轴要移动的步数
 	ulong yAxisToGo = abs(y - pos.y) / LengthPerStep + 0.5;
+#ifdef DEBUG
 	Serial.print(xAxisToGo);
 	Serial.print(",");
 	Serial.print(yAxisToGo);
+#endif
 	// x轴方向
-	Direction xDir = x < pos.x ? FORWORD : BACKWORD;
+	Direction xDir = x > pos.x ? FORWORD : BACKWORD;
 	// y轴方向
-	Direction yDir = y < pos.y ? FORWORD : BACKWORD;
-	pos.x = x;
-	pos.y = y;
-	/*
+	Direction yDir = y > pos.y ? FORWORD : BACKWORD;
+	
 	// 以实际走的步数计算位置，避免累积误差
 	pos.x += xAxisToGo * LengthPerStep * (xDir == FORWORD ? 1 : -1);
 	pos.y += yAxisToGo * LengthPerStep * (yDir == FORWORD ? 1 : -1);
-	*/
+	
 	// 设置方向
 	xAxis.setDirection(xDir);
-	yAxis.setDirection(yDir);
+	yAxis.setDirection(yDir); 
 	while (xAxisToGo && yAxisToGo)
 	{
 		// 两轴交替运动
 		// 速度快时近似为两轴同步运动
 		xAxis.OneStep();
 		--xAxisToGo;
-		yAxis.run(yDir, 1);
+		delayMicroseconds(50);
+		yAxis.OneStep();
 		--yAxisToGo;
 		delayMicroseconds(50);
 	}
@@ -97,9 +98,11 @@ void SlipTable::move(float x, float y)
 	{
 		yAxis.run(yDir, yAxisToGo, 50);
 	}
+#ifdef DEBUG
 	Serial.print(",(");
 	Serial.print(pos.x);
 	Serial.print(",");
 	Serial.print(pos.y);
 	Serial.println(")");
+#endif
 }

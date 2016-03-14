@@ -35,27 +35,27 @@ class SlipTable
 {
 private:
 	// 位置信息
-	Point<float> pos;
+	Point<double> pos;
 	// 尺寸 单位mm
-	uint xLength, yLength;
+	double xLength, yLength;
 	// 限位开关
 	uchr xSwitch1, xSwitch2, ySwitch1, ySwitch2;
 	// 螺距
-	float screwPitch;
+	double screwPitch;
 	// 每步长度
-	float LengthPerStep;
+	double LengthPerStep;
 public:
 	// 两轴的步进电机
 	StepperMotor xAxis, yAxis;
 	/*
 	构造函数，进行IO口的初始化，数据的初始化
 	*/
-	SlipTable(StepperMotor x, StepperMotor y, ulong xLen, ulong yLen, uchr xS1, uchr xS2, uchr yS1, uchr yS2,float sP);
+	SlipTable(StepperMotor x, StepperMotor y, double xLen, double yLen, uchr xS1, uchr xS2, uchr yS1, uchr yS2,float sP);
 	/*
 	获取当前位置
 	返回值为结构体Point
 	*/
-	Point<float> getPos() const;
+	Point<double> getPos() const;
 	/*
 	将两轴归零以确定坐标系原点
 	*/
@@ -63,8 +63,8 @@ public:
 	/*
 	移动到指定坐标
 	*/
-	void move(Point<float> pos);
-	void move(float x, float y);
+	void move(Point<double> pos);
+	void move(double x, double y);
 };
 
 #endif // __SLIP_TABLE_H__

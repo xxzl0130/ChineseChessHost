@@ -15,8 +15,6 @@ void playing(); // 需要调整
 // 重置棋盘
 void reset();
 
-getAvailableRecycleBin()
-
 */
 
 //LCD1602
@@ -29,7 +27,7 @@ LiquidCrystal_I2C Lcd(0x27, 16, 2);
 1*                *0xC0
 ******************
 */
-// 棋盘描述，2层，保存上一次扫描的状态
+// 棋盘描述
 Chess board[BoardRow][BoardCol] = {
 	// 行号 | 针脚序号(RowStart +)
 	{ r,h,e,a,k,a,e,h,r },// 9    |       0
@@ -117,11 +115,15 @@ void moveChess(String order);
 // 播放音乐
 void playAudio(char Filename[]);
 // 返回一个可用的弃子区域
-Point<float> getAvailableRecycleBin();
+Point<double> getAvailableRecycleBin();
 // 计算棋子的坐标
-Point<float> getChessPos(char col, char row);
+Point<double> getChessPos(char col, char row);
 // 修改棋盘记录
 void modifyBoard(Chess board[BoardRow][BoardCol], String order);
+// 抓起棋子
+void pickUpChess();
+// 放下棋子
+void putDownChess();
 
 void setup()
 {
@@ -279,6 +281,8 @@ void executeOrder(String& order)
 	}
 	// 走子
 	moveChess(move);
+	// 归位以避免影响视线
+	table.move(xAxisStart, yAxisStart);
 }
 
 bool draw(bool flag)
@@ -681,17 +685,18 @@ String readOrderFromHost()
 
 void sendGo(GameState state)
 {
-	comSer.print("go depth ");
-	comSer.print(diff);
+	String info = "go depth ";
+	info += String(static_cast<int>(diff), 10);
 	if (state == Draw)
 	{// 提和
-		comSer.print(" draw");
+		info += " draw";
 	}
 	else if (state == Resign)
-	{
-		comSer.print(" resign");
+	{// 认输
+		info += " resign";
 	}
-	comSer.print('\n');
+	// 一次性发送所有信息
+	comSer.println(info);
 }
 
 void sendBoard(Chess board[BoardRow][BoardCol], GameState state)
@@ -740,31 +745,14 @@ bool initSerial()
 			break;
 		}
 		delay(100);
-	}
-	// 初始化与Slave2通信
-	
-	Serial2.begin(generalBaudRate);
-	if (!Serial2)
-	return false;
-	Serial.println(testComHost);
-	for (uchr i = 0; i < 3; ++i)
-	{
-	tmp = comSer.readString();
-	if (strstr(tmp.c_str(), testComSlave) != NULL)
-	{ // 找到应有字符串，表示连接成功
-	Lcd.setCursor(0, 1);
-	Lcd.print("SERIAL2 OK!");
-	return true;
-	}
-	delay(100);
 	}*/
-	return false;
+	return true;
 }
 
 void initBoard()
 {
 	Lcd.setCursor(0, 1);
-	Lcd.print("BOARD OK!");
+	Lcd.print("BOARD OK!      ");
 }
 
 void initLCD()
@@ -780,21 +768,23 @@ void initPin()
 {
 	pinMode(ledPin, OUTPUT);
 	digitalWrite(13, LOW);
+	// 默认LED熄灭
 	pinMode(StartKey, INPUT_PULLUP);
 	pinMode(EndKey, INPUT_PULLUP);
 	pinMode(LeftKey, INPUT_PULLUP);
 	pinMode(RightKey, INPUT_PULLUP);
+	// 带上拉
 	pinMode(upMagnet, OUTPUT);
 	pinMode(jumpPinA, OUTPUT);
 	// 输出低电平，如果跳线联通则B也为低电平
 	pinMode(jumpPinB, INPUT_PULLUP);
 	digitalWrite(jumpPinA, LOW);
 	digitalWrite(upMagnet, LOW);
-	for (char i = 0; i <= RowCnt; ++i)
+	for (int i = 0; i < RowCnt; ++i)
 	{
 		pinMode(RowStart + i, OUTPUT);
 	}
-	for (char i = 0; i <= ColCnt; ++i)
+	for (char i = 0; i < ColCnt; ++i)
 	{
 		pinMode(ColStart + i, INPUT);
 	}
@@ -809,7 +799,7 @@ void initSDPlayer()
 
 void moveChess(String order)
 {
-	Point<float> scr, dst;
+	Point<double> scr, dst;
 	// 棋子坐标
 	scr = getChessPos(order[0], order[1]);
 	// 目标坐标
@@ -836,15 +826,15 @@ void moveChess(String order)
 		comSer.println(static_cast<char>(board[9 - (order[3] - '0')][order[2] - 'a']));
 #endif
 		table.move(dst);
-		digitalWrite(upMagnet, HIGH);
+		pickUpChess();
 		table.move(getAvailableRecycleBin());
-		digitalWrite(upMagnet, LOW);
+		putDownChess();
 	}
 	table.move(scr);
-	digitalWrite(upMagnet, HIGH);
+	pickUpChess();
 	delay(5000);
 	table.move(dst);
-	digitalWrite(upMagnet, LOW);
+	putDownChess();
 	modifyBoard(board, order);
 #ifdef DEBUG
 	comSer.println("done");
@@ -863,9 +853,9 @@ void playAudio(char Filename[])
 	}
 }
 
-Point<float> getAvailableRecycleBin()
+Point<double> getAvailableRecycleBin()
 {
-	Point<float> bin;
+	Point<double> bin;
 	static uchr list[10] = { 0 };
 	for (int i = 0; i < 10; ++i)
 	{
@@ -877,12 +867,12 @@ Point<float> getAvailableRecycleBin()
 		}
 	}
 	return bin;
-	//return Point<float>(0, 0);
+	//return Point<double>(0, 0);
 }
 
-Point<float> getChessPos(char col, char row)
+Point<double> getChessPos(char col, char row)
 {
-	Point<float> pos(xAxisStart, yAxisStart);
+	Point<double> pos(xAxisStart, yAxisStart);
 	int _col = col - 'a', _row = 9 - (row - '0');
 	pos.x += _col * boxWidth;
 	pos.y += _row * boxLength;
@@ -898,4 +888,24 @@ inline void modifyBoard(Chess board[BoardRow][BoardCol], String order)
 {
 	board[9 - (order[3] - '0')][order[2] - 'a'] = board[9 - (order[1] - '0')][order[0] - 'a'];
 	board[9 - (order[1] - '0')][order[0] - 'a'] = b;
+}
+
+void pickUpChess()
+{
+	// 落下滑台
+	upDownMotor.run(FORWORD, zAxisStep);
+	// 打开继电器
+	digitalWrite(upMagnet, HIGH);
+	// 升起滑台
+	upDownMotor.run(BACKWORD, zAxisStep);
+}
+
+void putDownChess()
+{
+	// 升起滑台
+	upDownMotor.run(BACKWORD, zAxisStep);
+	// 打开继电器
+	digitalWrite(upMagnet, HIGH);
+	// 落下滑台
+	upDownMotor.run(FORWORD, zAxisStep);
 }

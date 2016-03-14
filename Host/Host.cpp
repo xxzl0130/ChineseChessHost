@@ -157,18 +157,18 @@ inline void send2Engine(string& msg)
 
 bool readOrderFromEngine(char* buf, size_t size)
 {
-	char *ptr;
+	char* ptr;
 	char order[50];
 	// 从引擎不断读入
-	while(ReadFile(hPipeOutputRead, buf, size, nullptr, nullptr))
+	while (ReadFile(hPipeOutputRead, buf, size, nullptr, nullptr))
 	{
 		// 设置文字颜色
 		SetConsoleTextAttribute(hScreen, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
 		// 输出信息
 		cout << buf;
-		if((ptr = strstr(buf,"bestmove")) != nullptr)
+		if ((ptr = strstr(buf, "bestmove")) != nullptr)
 		{
-			memset(order, 0,sizeof(order));
+			memset(order, 0, sizeof(order));
 			// 将bestmove那一整行复制出来
 			memcpy_s(order, sizeof(order), ptr, strchr(ptr, '\n') - ptr);
 			// 再复制回buf
@@ -183,7 +183,7 @@ bool readOrderFromEngine(char* buf, size_t size)
 
 void slave2Engine()
 {
-	while(true)
+	while (true)
 	{
 		try
 		{
@@ -193,7 +193,7 @@ void slave2Engine()
 				string tmp;
 				// 读一整行
 				slave.readline(tmp);
-				if(tmp[tmp.length() - 1] != '\n')
+				if (tmp[tmp.length() - 1] != '\n')
 				{
 					// 保证有换行
 					tmp += "\n";
@@ -223,12 +223,12 @@ void slave2Engine()
 
 void engine2Slave()
 {
-	while(true)
+	while (true)
 	{
 		try
 		{
 			// 从引擎读入信息
-			if(readOrderFromEngine(buf,MAX_BUF_SIZE))
+			if (readOrderFromEngine(buf,MAX_BUF_SIZE))
 			{
 				// 向引擎发送信息
 				slave.write(reinterpret_cast<unsigned char*>(buf), strlen(buf));
@@ -237,6 +237,7 @@ void engine2Slave()
 		catch (exception& err)
 		{
 			cerr << "Unhandled Exception: " << err.what() << endl;
+			system("pause");
 			exit(1);
 		}
 		Sleep(200);
@@ -249,12 +250,12 @@ void work()
 	th.push_back(thread(slave2Engine));
 	th.push_back(thread(engine2Slave));
 	// 两个线程在后台转发数据
-	for (auto it = th.begin();it != th.end();++it)
+	for (auto it = th.begin(); it != th.end(); ++it)
 	{
 		it->detach();
 	}
 	// 保持休眠
-	while(true)
+	while (true)
 	{
 		Sleep(1000);
 	}
