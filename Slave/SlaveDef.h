@@ -46,13 +46,8 @@
 #define jumpPinA		41
 #define jumpPinB		42
 
-#ifdef DEBUG
-// 测试使用的串口
-#define comSer Serial
-#else
 // 最终使用的串口
 #define comSer Serial1
-#endif // DEBUG
 
 // 游戏状态
 enum GameState

@@ -722,6 +722,8 @@ bool isPress(uint8_t pin, uint8_t state)
 
 bool initSerial()
 {
+	Lcd.setCursor(0, 1);
+	Lcd.print("    COM INIT   ");
 	// 初始化与Host通信
 	comSer.begin(generalBaudRate);
 	if (!comSer)
@@ -729,6 +731,13 @@ bool initSerial()
 		digitalWrite(ledPin, HIGH);
 		delay(1000);
 		return false;
+	}
+	while(true)
+	{
+		if(comSer.available())
+		{
+			comSer.print(comSer.readString());
+		}
 	}
 #ifdef DEBUG
 	comSer.println("Hello");
@@ -760,12 +769,14 @@ void initLCD()
 	Lcd.init();
 	Lcd.backlight();//开启背光
 	Lcd.noBlink();//无光标
-	Lcd.setCursor(1, 0);
-	Lcd.print("SYSTEM INIT");
+	Lcd.setCursor(0, 0);
+	Lcd.print(" SYSTEM INIT");
 }
 
 void initPin()
 {
+	Lcd.setCursor(0, 1);
+	Lcd.print("   PINS INIT   ");
 	pinMode(ledPin, OUTPUT);
 	digitalWrite(13, LOW);
 	// 默认LED熄灭

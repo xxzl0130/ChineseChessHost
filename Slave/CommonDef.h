@@ -22,7 +22,7 @@
 // 从机向主机回复的测试字符串
 #define testComSlave "Hello host"
 // 串口比特率
-#define generalBaudRate 115200UL
+#define generalBaudRate 9600UL
 
 // 棋盘行数
 #define BoardRow 10

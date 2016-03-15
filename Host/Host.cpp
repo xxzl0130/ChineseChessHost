@@ -25,7 +25,8 @@ PROCESS_INFORMATION engineProcess;
 /*
 向引擎发送信息
 */
-inline void send2Engine(string &msg);
+inline void send2Engine(const string &msg);
+inline void send2Engine(const char *msg);
 
 int main(int argc, char** argv)
 {
@@ -33,13 +34,12 @@ int main(int argc, char** argv)
 	vector<thread> th;
 	hScreen = GetStdHandle(STD_OUTPUT_HANDLE);
 	// 分多线程初始化
-	th.push_back(thread(initSerialArg, argc, argv));
+	//th.push_back(thread(initSerialArg, argc, argv));
 	th.push_back(thread(initEngine));
 	for (auto it = th.begin(); it != th.end(); ++it)
 	{
 		it->join();
 	}
-	cout << "Init all done." << endl;
 	work();
 	return 0;
 }
@@ -135,14 +135,28 @@ void initEngine()
 	if (CreateProcess(engineAddr, nullptr, nullptr, nullptr, TRUE, NULL,
 	                  nullptr, nullptr, &engineInfo, &engineProcess) == 0)
 		goto engineErr;
-	WriteFile(hPipeInputWrite, "ucci\n", 5, nullptr, nullptr);
+	send2Engine("ucci\n");
 
 	//给1s让引擎启动
 	Sleep(1000);
 	ReadFile(hPipeOutputRead, buf, MAX_BUF_SIZE, nullptr, nullptr);
 	if (strstr(buf, "ucciok") == nullptr)
 		goto engineErr;
+	// 设置文字颜色
+	SetConsoleTextAttribute(hScreen, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+	// 输出信息
+	cout << buf;
+	SetConsoleTextAttribute(hScreen, FOREGROUND_INTENSITY);
 	cout << "引擎初始化成功。" << endl;
+	// 启用4线程
+	send2Engine("setoption threads 4\n");
+	// 1G内存
+	send2Engine("setoption hashsize 1024\n");
+	// 风格
+	send2Engine("setoption style normal\n");
+	// 随机性
+	send2Engine("setoption randomness small\n");
+	
 	return;
 
 engineErr:
@@ -150,9 +164,22 @@ engineErr:
 	exit(1);
 }
 
-inline void send2Engine(string& msg)
+inline void send2Engine(const string& msg)
 {
 	WriteFile(hPipeInputWrite, msg.c_str(), msg.length(), nullptr, nullptr);
+	// 设置文字颜色
+	SetConsoleTextAttribute(hScreen, FOREGROUND_RED | FOREGROUND_INTENSITY);
+	// 输出信息
+	cout << msg;
+}
+
+inline void send2Engine(const char* msg)
+{
+	WriteFile(hPipeInputWrite, msg, strlen(msg), nullptr, nullptr);
+	// 设置文字颜色
+	SetConsoleTextAttribute(hScreen, FOREGROUND_RED | FOREGROUND_INTENSITY);
+	// 输出信息
+	cout << msg;
 }
 
 bool readOrderFromEngine(char* buf, size_t size)
