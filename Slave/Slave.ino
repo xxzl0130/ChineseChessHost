@@ -273,7 +273,7 @@ void executeOrder(String& order)
 		resignCnt = 0;
 	}
 	// 提取4位的走子信息
-	char move[4];
+	char move[5] = { 0 };
 	char* ptr = strstr(order.c_str(), "bestmove") + 9/*跳过"bestmove "*/;
 	for (uint i = 0; i < 4; ++i)
 	{
@@ -528,7 +528,7 @@ void start()
 
 void playing()
 {
-	while (true)
+	/*while (true)
 	{
 		// 求和
 		if (isPress(StartKey, LOW))
@@ -542,9 +542,6 @@ void playing()
 		}
 		switch (gameState)
 		{
-			/*
-			先列好各种情况，等待完善
-			*/
 		case Play:
 			detectPickUpChess();
 			break;
@@ -569,6 +566,29 @@ void playing()
 		default:
 			break;
 		}
+	}*/
+	// 预先设定好的走法
+	char order[10][2][5] = {
+		"b2b4","g9e7",
+		"h2e2","b9c7",
+		"h0g2","h9f8",
+		"i0h0","c6c5",
+		"b0a2","g6g5",
+		"a0b0","b7b0",
+		"a2b0","g5g4",
+		"g3g4","a9b9",
+		"b4c4","c5c4"
+	};
+	for (int i = 0; i < 9; ++i)
+	{
+		digitalWrite(ledPin, i & 1);
+		modifyBoard(board, String(order[i][0]));
+		//moveChess(String(order[i][1]));
+		sendBoard(board);
+		while (!comSer.available());
+		tmp = readOrderFromHost();
+		executeOrder(tmp);
+		delay(5000);
 	}
 }
 
@@ -702,6 +722,7 @@ void sendGo(GameState state)
 void sendBoard(Chess board[BoardRow][BoardCol], GameState state)
 {
 	creatFEN(board, buf, AIColor, ++roundCnt);
+	comSer.print("position fen ");
 	comSer.println(buf);
 	sendGo(state);
 }
@@ -732,17 +753,7 @@ bool initSerial()
 		delay(1000);
 		return false;
 	}
-	while(true)
-	{
-		if(comSer.available())
-		{
-			comSer.print(comSer.readString());
-		}
-	}
-#ifdef DEBUG
-	comSer.println("Hello");
-#endif
-	/*while (!comSer.available());
+	while (!comSer.available());
 	for (uchr i = 0; i < 3; ++i)
 	{
 		tmp = comSer.readString();
@@ -754,7 +765,10 @@ bool initSerial()
 			break;
 		}
 		delay(100);
-	}*/
+	}
+#ifdef DEBUG
+	debugSer.begin(generalBaudRate);
+#endif
 	return true;
 }
 
@@ -816,17 +830,17 @@ void moveChess(String order)
 	// 目标坐标
 	dst = getChessPos(order[2], order[3]);
 #ifdef DEBUG
-	comSer.println(order);
-	comSer.print("(");
-	comSer.print(scr.x);
-	comSer.print(",");
-	comSer.print(scr.y);
-	comSer.print("),");
-	comSer.print("(");
-	comSer.print(dst.x);
-	comSer.print(",");
-	comSer.print(dst.y);
-	comSer.print(")\n");
+	debugSer.println(order);
+	debugSer.print("(");
+	debugSer.print(scr.x);
+	debugSer.print(",");
+	debugSer.print(scr.y);
+	debugSer.print("),");
+	debugSer.print("(");
+	debugSer.print(dst.x);
+	debugSer.print(",");
+	debugSer.print(dst.y);
+	debugSer.print(")\n");
 #endif
 	if (board[9 - (order[3] - '0')][order[2] - 'a'] != b)
 	{

@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 	vector<thread> th;
 	hScreen = GetStdHandle(STD_OUTPUT_HANDLE);
 	// 分多线程初始化
-	//th.push_back(thread(initSerialArg, argc, argv));
+	th.push_back(thread(initSerialArg, argc, argv));
 	th.push_back(thread(initEngine));
 	for (auto it = th.begin(); it != th.end(); ++it)
 	{
@@ -79,6 +79,9 @@ void initSerialArg(int argc, char** argv)
 void initSerial(string port, uint baud)
 {
 	string tmp;
+	Sleep(100);
+	SetConsoleTextAttribute(hScreen, FOREGROUND_BLUE);
+	cout << "Port:" << port << " Baud:" << baud << endl;
 	// 设置串口属性并开启
 	slave.setPort(port);
 	slave.setBaudrate(baud);
@@ -91,24 +94,25 @@ void initSerial(string port, uint baud)
 		cout << __LINE__ << ":";
 		goto serialErr;
 	}
-	cout << "串口初始化成功。" << endl;
-	return;
-	/*
+	SetConsoleTextAttribute(hScreen, FOREGROUND_INTENSITY);
+	//cout << "串口初始化成功。" << endl;
+	//return;
 	// 向从机发送握手信息
 	slave.write(testComHost);
 	// 检查回收的握手信息
+	Sleep(1000);
 	for (auto i = 0; i < 3; ++i)
 	{
 		slave.readline(tmp);
 		if (tmp.find(testComSlave) != string::npos)
 		{
+			SetConsoleTextAttribute(hScreen, FOREGROUND_BLUE);
 			cout << "串口初始化成功。" << endl;
 			return;
 		}
 	}
 	cerr << __LINE__ << ":";
 	goto serialErr;
-	*/
 serialErr:
 	cerr << "无法打开串口:" << slave.getPort();
 	system("pause");
@@ -117,6 +121,8 @@ serialErr:
 
 void initEngine()
 {
+	SetConsoleTextAttribute(hScreen, FOREGROUND_BLUE);
+	cout << "Engine path:" << engineAddr << endl;
 	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
 	sa.lpSecurityDescriptor = nullptr;
 	sa.bInheritHandle = TRUE;
@@ -146,7 +152,7 @@ void initEngine()
 	SetConsoleTextAttribute(hScreen, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
 	// 输出信息
 	cout << buf;
-	SetConsoleTextAttribute(hScreen, FOREGROUND_INTENSITY);
+	SetConsoleTextAttribute(hScreen, FOREGROUND_BLUE);
 	cout << "引擎初始化成功。" << endl;
 	// 启用4线程
 	send2Engine("setoption threads 4\n");
@@ -177,7 +183,7 @@ inline void send2Engine(const char* msg)
 {
 	WriteFile(hPipeInputWrite, msg, strlen(msg), nullptr, nullptr);
 	// 设置文字颜色
-	SetConsoleTextAttribute(hScreen, FOREGROUND_RED | FOREGROUND_INTENSITY);
+	SetConsoleTextAttribute(hScreen, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
 	// 输出信息
 	cout << msg;
 }
@@ -185,8 +191,10 @@ inline void send2Engine(const char* msg)
 bool readOrderFromEngine(char* buf, size_t size)
 {
 	char* ptr;
-	char order[50];
+	char order[64];
 	// 从引擎不断读入
+	memset(buf, 0, size);
+	memset(order, 0, sizeof(order));
 	while (ReadFile(hPipeOutputRead, buf, size, nullptr, nullptr))
 	{
 		// 设置文字颜色
@@ -197,9 +205,10 @@ bool readOrderFromEngine(char* buf, size_t size)
 		{
 			memset(order, 0, sizeof(order));
 			// 将bestmove那一整行复制出来
-			memcpy_s(order, sizeof(order), ptr, strchr(ptr, '\n') - ptr);
+			for (auto i = 0, j = strchr(ptr, '\n') - ptr; i < j; ++i)
+				order[i] = ptr[i];
 			// 再复制回buf
-			strcpy_s(buf, strlen(order), order);
+			strcpy_s(buf, size, order);
 			// 找到bestmove后退出
 			return true;
 		}
@@ -227,10 +236,6 @@ void slave2Engine()
 				}
 				// 发送至引擎
 				send2Engine(tmp);
-				// 设置文字颜色
-				SetConsoleTextAttribute(hScreen, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-				// 输出信息
-				cout << tmp;
 				// 检查是否退出
 				if (tmp.find("quit") != string::npos)
 				{
@@ -257,7 +262,7 @@ void engine2Slave()
 			// 从引擎读入信息
 			if (readOrderFromEngine(buf,MAX_BUF_SIZE))
 			{
-				// 向引擎发送信息
+				// 向从机发送信息
 				slave.write(reinterpret_cast<unsigned char*>(buf), strlen(buf));
 			}
 		}

@@ -48,6 +48,8 @@
 
 // 最终使用的串口
 #define comSer Serial1
+// 输出调试信息用的串口
+#define debugSer Serial1
 
 // 游戏状态
 enum GameState
