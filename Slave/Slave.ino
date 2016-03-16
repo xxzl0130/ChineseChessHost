@@ -524,11 +524,17 @@ void start()
 {
 	selectDiff();
 	selectOrder();
+	// 游戏开始
+	Lcd.clear();
+	Lcd.setCursor(0, 0);
+	Lcd.print("  GAME START!  ");
+	Lcd.setCursor(0, 1);
+	Lcd.print(" DRAW   RESIGN ");
 }
 
 void playing()
 {
-	/*while (true)
+	while (true)
 	{
 		// 求和
 		if (isPress(StartKey, LOW))
@@ -549,16 +555,23 @@ void playing()
 			detectPutDownChess();
 			break;
 		case MoveDone:
+			// 提示当前为电脑回合
+			Lcd.setCursor(0, 0);
+			Lcd.print(" COMPUTER TURN  ");
 			sendBoard(board);
 			gameState = WaitOrder;
 			break;
 		case WaitOrder:
+			// 如果主机发来了指令
 			if (comSer.available())
 			{
 				tmp = readOrderFromHost();
 				executeOrder(tmp);
+				gameState = Play;
+				// 提示当前为玩家回合
+				Lcd.setCursor(0, 0);
+				Lcd.print("     YOUR TURN  ");
 			}
-			gameState = Play;
 			break;
 		case Win:case Lose:case Draw:case Resign:
 			// 这4个状态是已经进入gameOver的，所以结束本函数
@@ -566,7 +579,8 @@ void playing()
 		default:
 			break;
 		}
-	}*/
+	}
+	/*
 	// 预先设定好的走法
 	char order[10][2][5] = {
 		"b2b4","g9e7",
@@ -590,6 +604,7 @@ void playing()
 		executeOrder(tmp);
 		delay(5000);
 	}
+	*/
 }
 
 void reset()
@@ -857,7 +872,6 @@ void moveChess(String order)
 	}
 	table.move(scr);
 	pickUpChess();
-	delay(5000);
 	table.move(dst);
 	putDownChess();
 	modifyBoard(board, order);
