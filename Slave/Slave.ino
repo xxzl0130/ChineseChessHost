@@ -124,6 +124,8 @@ void modifyBoard(Chess board[BoardRow][BoardCol], String order);
 void pickUpChess();
 // 放下棋子
 void putDownChess();
+// 检查走子合法性
+bool checkPath(String path, Chess chess);
 
 void setup()
 {
@@ -239,7 +241,19 @@ bool detectPutDownChess()
 				default:
 					break;
 				}
-				return true;
+				// 计算走法
+				char path[5] = { chessHold[0].col + 'a',chessHold[0].row + '0',
+								'a' + j,'0' + i };
+				if(checkPath(path,chessHold[0].chess))
+				{
+					return true;
+				}
+				else
+				{
+					// 需要提示
+					gameState = Play;
+					return false;
+				}
 			}
 		}
 	}
@@ -935,6 +949,7 @@ void pickUpChess()
 	upDownMotor.run(FORWORD, zAxisStep);
 	// 打开继电器
 	digitalWrite(upMagnet, HIGH);
+	delay(10);
 	// 升起滑台
 	upDownMotor.run(BACKWORD, zAxisStep);
 }
@@ -947,4 +962,180 @@ void putDownChess()
 	digitalWrite(upMagnet, HIGH);
 	// 落下滑台
 	upDownMotor.run(FORWORD, zAxisStep);
+}
+
+bool checkPath(String path, Chess chess)
+{
+	int x, y;
+	switch(chess)
+	{
+	case k:case K:case a:case A://
+		// 将/帅/仕/士限制相同
+		if ((path[2] == 'd' && path[2] == 'e' && path[2] == 'f') && // 纵向
+			(path[3] >= '7' && path[3] <= '9') || // 横向
+			(path[3] >= '0' && path[3] <= '2'))   // 限制在田字格
+			return true;
+		else
+		{
+			return false;
+		}
+	case e:case E:
+		x = path[2] - path[0];
+		y = path[3] - path[1];
+		if(abs(x) != 2 || abs(y) != 2)
+		{// 检测田字
+			return false;
+		}
+		if(board[path[1] - '9' + (y /2)][path[0] - 'a' + (x / 2)] != b)
+		{// 检测象眼
+			return false;
+		}
+		else
+		{
+			return false;
+		}
+	case h:case H:
+		x = path[2] - path[0];
+		y = path[3] - path[1];
+		if(abs(x) > abs(y))
+		{
+			if(abs(x) != 2 || abs(y) != 1)
+			{// 检测日字
+				return false;
+			}
+			if (board[path[1] - '9'][path[0] - 'a' + (x / 2)] != b)
+			{// 检测马脚
+				return false;
+			}
+			return true;
+		}
+		else
+		{
+			if (abs(x) != 1 || abs(y) != 2)
+			{// 检测日字
+				return false;
+			}
+			if (board[path[1] - '9' + (y / 2)][path[0] - 'a'] != b)
+			{// 检测马脚
+				return false;
+			}
+			return true;
+		}
+	case r:case R:
+		if(path[2] == path[0])
+		{// 竖着走
+			int i = min(path[3], path[1]), j = max(path[1], path[3]);
+			for (; i < j;++i)
+			{
+				if (board[i - '9'][path[0] - 'a'] != b)
+				{// 检查一路上有没有子
+					return false;
+				}
+			}
+			return true;
+		}
+		else if(path[3] == path[1])
+		{// 横着走
+			int i = min(path[0], path[2]), j = max(path[0], path[2]);
+			for (; i < j; ++i)
+			{
+				if (board[path[1] - '9'][j - 'a'] != b)
+				{// 检查一路上有没有子
+					return false;
+				}
+			}
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	case c:case C:
+		if (path[2] == path[0])
+		{// 竖着走
+			int i = min(path[3], path[1]), j = max(path[1], path[3]),count = 0;
+			for (; i <= j; ++i)
+			{
+				if (board[i - '9'][path[0] - 'a'] != b)
+				{// 检查一路上有几个子
+					++count;
+				}
+			}
+			// 走一步或者翻山打一个
+			return count == 0 || count == 2;
+		}
+		else if (path[3] == path[1])
+		{// 横着走
+			int i = min(path[0], path[2]), j = max(path[0], path[2]), count = 0;
+			for (; i <= j; ++i)
+			{
+				if (board[path[1] - '9'][j - 'a'] != b)
+				{// 检查一路上有多少子
+					++count;
+				}
+			}
+			// 走一步或者翻山打一个
+			return count == 0 || count == 2;
+		}
+		else
+		{
+			return false;
+		}
+	case p:
+		if(path[1] >= '5')
+		{// 还没过河
+			if(path[2] == path[0] && path[3] == path[1] - 1)
+			{
+				// 只能前进
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{// 过河可以随便走了
+			x = path[2] - path[0];
+			y = path[3] - path[1];
+			if(max(abs(x),abs(y)) >= 1)
+			{
+				//　只能走一格
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+	case P:
+		if (path[1] <= '4')
+		{// 还没过河
+			if (path[2] == path[0] && path[3] == path[1] + 1)
+			{
+				// 只能前进
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{// 过河可以随便走了
+			x = path[2] - path[0];
+			y = path[3] - path[1];
+			if (max(abs(x), abs(y)) >= 1)
+			{
+				//　只能走一格
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+	default:
+		return false;
+	}
 }
