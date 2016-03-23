@@ -18,7 +18,8 @@
 // 右按键 上拉
 #define RightKey	5
 // 电磁铁
-#define upMagnet 12
+#define MagnetUp	14
+#define MagnetDown	15
 
 // 棋盘行引脚起始口
 #define RowStart	22
@@ -43,13 +44,13 @@
 #define AudioMode	(SSDA_MODE_FULLRATE | SSDA_MODE_STEREO)
 
 // 屏蔽跳线
-#define jumpPinA		41
-#define jumpPinB		42
+#define jumpPinA		42
+#define jumpPinB		43
 
 // 最终使用的串口
 #define comSer Serial1
 // 输出调试信息用的串口
-#define debugSer Serial1
+#define debugSer Serial
 
 // 游戏状态
 enum GameState
@@ -116,20 +117,20 @@ public:
 // 螺距(mm)
 #define pitch			8
 // 棋盘长度 mm
-#define boardLength		250
+#define boardLength		230
 // 棋盘宽度 mm
-#define boardWidth		250
+#define boardWidth		230
 // 格子宽度
-#define boxWidth		30
+#define boxWidth		25.4
 // 格子高度
-#define boxLength		22
+#define boxLength		22.5
 // 楚河汉界宽度
 #define riverWidth		24
 // 棋盘起始横坐标
-#define xAxisStart		15
+#define xAxisStart		0
 // 棋盘起始纵坐标
-#define yAxisStart		15
+#define yAxisStart		0
 // z轴步数
-#define zAxisStep		1600u
+#define zAxisStep		1024UL
 
 #endif // __SLAVE_DEF_H__

@@ -129,11 +129,13 @@ bool checkPath(String path, Chess chess);
 
 void setup()
 {
-	initPin();
 	initLCD();
+	initPin();
 	initSerial();
 	//initBoard();
 	// 跳线联通则不进行运动
+	Lcd.setCursor(0, 1);
+	Lcd.print("INIT ALL DONE   ");
 	uchr flag = 0;
 	while (digitalRead(jumpPinB) == LOW)
 	{
@@ -147,7 +149,8 @@ void loop()
 	waitStart();
 	start();
 	playing();
-	reset();
+	//reset();
+	
 }
 
 bool detectPickUpChess()
@@ -393,7 +396,7 @@ void waitStart()
 			break;
 		}
 	}
-	
+	delay(100);
 }
 
 void selectDiff()
@@ -404,6 +407,7 @@ void selectDiff()
 	Lcd.print(" >Easy< Normal");
 	Lcd.setCursor(0, 1);
 	Lcd.print("  Hard  Master");
+	delay(500);
 	while (true)
 	{
 		if (isPress(StartKey, LOW))
@@ -440,6 +444,7 @@ void selectDiff()
 				diff = hard;
 				break;
 			}
+			delay(200);
 		}
 		// 按右键提高难度
 		if (isPress(RightKey, LOW))
@@ -468,6 +473,7 @@ void selectDiff()
 				diff = master;
 				break;
 			}
+			delay(200);
 		}
 	}
 }
@@ -480,6 +486,7 @@ void selectOrder()
 	Lcd.print("Select Color:");
 	Lcd.setCursor(0, 1);
 	Lcd.print("  >Red<  Black  ");
+	delay(500);
 	while (true)
 	{
 		if (isPress(StartKey, LOW))
@@ -509,6 +516,7 @@ void selectOrder()
 				AIColorNumber = 'z';
 				break;
 			}
+			delay(200);
 		}
 		if (isPress(RightKey, LOW))
 		{
@@ -530,16 +538,19 @@ void selectOrder()
 				AIColorNumber = 'Z';
 				break;
 			}
+			delay(200);
 		}
 	}
 }
 
 void start()
 {
+	Lcd.clear();
 	selectDiff();
-	selectOrder();
+	//selectOrder();
 	// 游戏开始
 	Lcd.clear();
+	delay(100);
 	Lcd.setCursor(0, 0);
 	Lcd.print("  GAME START!  ");
 	Lcd.setCursor(0, 1);
@@ -594,9 +605,9 @@ void playing()
 			break;
 		}
 	}
-	/*
+	
 	// 预先设定好的走法
-	char order[10][2][5] = {
+	/*char order[10][2][5] = {
 		"b2b4","g9e7",
 		"h2e2","b9c7",
 		"h0g2","h9f8",
@@ -611,14 +622,14 @@ void playing()
 	{
 		digitalWrite(ledPin, i & 1);
 		modifyBoard(board, String(order[i][0]));
-		//moveChess(String(order[i][1]));
-		sendBoard(board);
-		while (!comSer.available());
-		tmp = readOrderFromHost();
-		executeOrder(tmp);
+		moveChess(String(order[i][1]));
+		//sendBoard(board);
+		//while (!comSer.available());
+		//tmp = readOrderFromHost();
+		//executeOrder(tmp);
 		delay(5000);
-	}
-	*/
+	}*/
+	
 }
 
 void reset()
@@ -649,14 +660,10 @@ void gameOver(GameState state)
 	Lcd.print("Play again?");
 	while (true)
 	{
-		if (Serial2.available())
+		if(isPress(StartKey,LOW))
 		{
-			int t = Serial2.read();
-			if (t == StartKey)
-			{
-				reset();
-				break;
-			}
+			reset();
+			break;
 		}
 	}
 }
@@ -775,13 +782,14 @@ bool initSerial()
 	Lcd.setCursor(0, 1);
 	Lcd.print("    COM INIT   ");
 	// 初始化与Host通信
-	comSer.begin(generalBaudRate);
+	/*comSer.begin(generalBaudRate);
 	if (!comSer)
 	{
 		digitalWrite(ledPin, HIGH);
 		delay(1000);
 		return false;
-	}
+	}*/
+/*
 	while (!comSer.available());
 	for (uchr i = 0; i < 3; ++i)
 	{
@@ -795,6 +803,7 @@ bool initSerial()
 		}
 		delay(100);
 	}
+*/
 #ifdef DEBUG
 	debugSer.begin(generalBaudRate);
 #endif
@@ -821,19 +830,20 @@ void initPin()
 	Lcd.setCursor(0, 1);
 	Lcd.print("   PINS INIT   ");
 	pinMode(ledPin, OUTPUT);
-	digitalWrite(13, LOW);
+	digitalWrite(ledPin, LOW);
 	// 默认LED熄灭
 	pinMode(StartKey, INPUT_PULLUP);
 	pinMode(EndKey, INPUT_PULLUP);
 	pinMode(LeftKey, INPUT_PULLUP);
 	pinMode(RightKey, INPUT_PULLUP);
 	// 带上拉
-	pinMode(upMagnet, OUTPUT);
+	pinMode(MagnetUp, OUTPUT);
+	pinMode(MagnetDown, OUTPUT);
 	pinMode(jumpPinA, OUTPUT);
 	// 输出低电平，如果跳线联通则B也为低电平
 	pinMode(jumpPinB, INPUT_PULLUP);
 	digitalWrite(jumpPinA, LOW);
-	digitalWrite(upMagnet, LOW);
+	digitalWrite(MagnetUp, LOW);
 	for (int i = 0; i < RowCnt; ++i)
 	{
 		pinMode(RowStart + i, OUTPUT);
@@ -858,27 +868,10 @@ void moveChess(String order)
 	scr = getChessPos(order[0], order[1]);
 	// 目标坐标
 	dst = getChessPos(order[2], order[3]);
-#ifdef DEBUG
-	debugSer.println(order);
-	debugSer.print("(");
-	debugSer.print(scr.x);
-	debugSer.print(",");
-	debugSer.print(scr.y);
-	debugSer.print("),");
-	debugSer.print("(");
-	debugSer.print(dst.x);
-	debugSer.print(",");
-	debugSer.print(dst.y);
-	debugSer.print(")\n");
-#endif
 	if (board[9 - (order[3] - '0')][order[2] - 'a'] != b)
 	{
 		// 目标处有子，即要吃子
 		// 先移动到弃子处
-#ifdef DEBUG
-		comSer.print("eat ");
-		comSer.println(static_cast<char>(board[9 - (order[3] - '0')][order[2] - 'a']));
-#endif
 		table.move(dst);
 		pickUpChess();
 		table.move(getAvailableRecycleBin());
@@ -889,9 +882,6 @@ void moveChess(String order)
 	table.move(dst);
 	putDownChess();
 	modifyBoard(board, order);
-#ifdef DEBUG
-	comSer.println("done");
-#endif
 }
 
 void playAudio(char Filename[])
@@ -946,22 +936,25 @@ inline void modifyBoard(Chess board[BoardRow][BoardCol], String order)
 void pickUpChess()
 {
 	// 落下滑台
-	upDownMotor.run(FORWORD, zAxisStep);
-	// 打开继电器
-	digitalWrite(upMagnet, HIGH);
-	delay(10);
+	upDownMotor.run(BACKWORD, zAxisStep,500);
+	// 电磁铁正向通电
+	digitalWrite(MagnetUp, HIGH);
+	digitalWrite(MagnetDown, LOW);
+	delay(200);
 	// 升起滑台
-	upDownMotor.run(BACKWORD, zAxisStep);
+	upDownMotor.run(FORWORD, zAxisStep,500);
 }
 
 void putDownChess()
 {
-	// 升起滑台
-	upDownMotor.run(BACKWORD, zAxisStep);
-	// 打开继电器
-	digitalWrite(upMagnet, HIGH);
 	// 落下滑台
-	upDownMotor.run(FORWORD, zAxisStep);
+	upDownMotor.run(BACKWORD, zAxisStep, 500);
+	// 电磁铁反向通电
+	digitalWrite(MagnetDown, HIGH);
+	digitalWrite(MagnetUp, LOW);
+	delay(200);
+	// 升起滑台
+	upDownMotor.run(FORWORD, zAxisStep, 500);
 }
 
 bool checkPath(String path, Chess chess)

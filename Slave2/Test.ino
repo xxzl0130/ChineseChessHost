@@ -1,4 +1,4 @@
-const unsigned char pulsePin1 = 4, dirPin1 = 5;
+const unsigned char pulsePin1 = 10, dirPin1 = 11;
 const unsigned char pulsePin2 = 6, dirPin2 = 7;
 
 void setup()
@@ -21,28 +21,20 @@ inline void setDir(unsigned char dir)
 void step1()
 {
 	digitalWrite(pulsePin1, HIGH);
-	delayMicroseconds(10);
+	delayMicroseconds(20);
 	digitalWrite(pulsePin1, LOW);
-	delayMicroseconds(10);
-}
-
-void step2()
-{
-	digitalWrite(pulsePin2, HIGH);
-	delayMicroseconds(10);
-	digitalWrite(pulsePin2, LOW);
-	delayMicroseconds(10);
+	delayMicroseconds(20);
 }
 
 void loop()
 {
 	static char flag = 0;
 	setDir(flag ^= 1);
-	for (int i = 0; i < 1600;++i)
+	digitalWrite(13, flag);
+	for (int i = 0; i < 1024;++i)
 	{
 		step1();
-		step2();
-		delayMicroseconds(50);
+		delayMicroseconds(500);
 	}
 	delay(1000);
 }

@@ -15,10 +15,10 @@ Pin		”√Õæ
 9		StepperMotor2 dirPin
 10		StepperMotor3 pulsePin
 11		StepperMotor3 dirPin
-12		upMagnet
+12		none
 13		LED
-14		TX3/not used
-15		RX3/not used
+14		TX3/magnet up
+15		RX3/magnet down
 16		TX2/not used
 17		RX2/not used
 18		TX1/Bluetooth
@@ -44,9 +44,9 @@ Pin		”√Õæ
 38		ColStart + 6
 39		ColStart + 7
 40		ColStart + 8
-41		jumpPinA
-42		jumpPinB
-43		none
+41		none
+42		jumpPinA
+43		jumpPinB
 44		LeftAudio
 45		RightAudio
 46		tableSwitch0
