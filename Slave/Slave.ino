@@ -140,17 +140,38 @@ void setup()
 	while (digitalRead(jumpPinB) == LOW)
 	{
 		digitalWrite(ledPin, flag ^= 1);
+		digitalWrite(RowStart, LOW);
+		for (int i = 0; i < ColCnt; ++i)
+		{
+			debugSer.print(digitalRead(ColStart + i));
+		}
+		debugSer.print("\n");
 		delay(300);
 	}
 }
 
 void loop()
 {
-	waitStart();
+	/*waitStart();
 	start();
 	playing();
-	//reset();
-	
+	//reset();*/
+	for (uchr i = 0; i < RowCnt; ++i)
+	{
+		digitalWrite(RowStart + i, HIGH);
+		delay(10);
+		for (uchr j = 0; j < ColCnt; ++j)
+		{
+			//debugSer.print(isPress(ColStart + j));
+			debugSer.print(digitalRead(ColStart + j));
+			/*debugSer.print(analogRead(A0 + j));
+			debugSer.print(" ");*/
+		}
+		debugSer.print('\n');
+		digitalWrite(RowStart + i, LOW);
+	}
+	debugSer.println("--------------------");
+	delay(2000);
 }
 
 bool detectPickUpChess()
@@ -162,7 +183,7 @@ bool detectPickUpChess()
 		{
 			if (board[i][j] != b /*该处之前有子*/
 				&& digitalRead(ColStart + j) == LOW /*现在此处无子*/
-				&& isPress(ColStart + j, LOW) /*防抖检测*/)
+				&& isPress(ColStart + j) /*防抖检测*/)
 			{
 				if (isUpperCase(AIColorNumber) != isUpperCase(board[i][j]))
 				{
@@ -183,6 +204,7 @@ bool detectPickUpChess()
 				return true;
 			}
 		}
+		digitalWrite(RowStart + i, LOW);
 	}
 	return false;
 }
@@ -196,7 +218,7 @@ bool detectPutDownChess()
 		{
 			if (board[i][j] == b /*该处之前无子*/
 				&& digitalRead(ColStart + j) == HIGH /*现在此处有子*/
-				&& isPress(ColStart + j, HIGH) /*防抖检测*/)
+				&& isPress(ColStart + j) /*防抖检测*/)
 			{
 				switch (gameState)
 				{
@@ -259,6 +281,7 @@ bool detectPutDownChess()
 				}
 			}
 		}
+		digitalWrite(RowStart + i, LOW);
 	}
 	return false;
 }
@@ -847,10 +870,11 @@ void initPin()
 	for (int i = 0; i < RowCnt; ++i)
 	{
 		pinMode(RowStart + i, OUTPUT);
+		digitalWrite(RowStart + i, LOW);
 	}
 	for (char i = 0; i < ColCnt; ++i)
 	{
-		pinMode(ColStart + i, INPUT);
+		pinMode(ColStart + i, INPUT_PULLUP);
 	}
 }
 

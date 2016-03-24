@@ -16,6 +16,7 @@ using namespace serial;
 
 MySerial slave;
 char buf[MAX_BUF_SIZE + 1];
+char board[10][10];
 // 创建两个管道
 HANDLE hPipeInputRead, hPipeInputWrite, hPipeOutputRead, hPipeOutputWrite;
 HANDLE hScreen;
@@ -242,6 +243,14 @@ void slave2Engine()
 					cout << "从机已退出，程序结束。" << endl;
 					break;
 				}
+				if(decodeFEN(board,tmp))
+				{
+					for (auto i = 0; i < 10;++i)
+					{
+						SetConsoleTextAttribute(hScreen, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+						cout << board[i] << endl;
+					}
+				}
 			}
 		}
 		catch (exception& err)
@@ -291,4 +300,35 @@ void work()
 	{
 		Sleep(1000);
 	}
+}
+
+bool decodeFEN(char board[10][10], string fen)
+{
+	memset(board, 0, sizeof(char) * 10 * 10);
+	auto pos = fen.find("fen");
+	if (pos == string::npos)
+		return false;
+	int x = 0, y = 0;
+	for (auto i = pos + 4; i < fen.size() && fen[i] != ' '; ++i)
+	{
+		if (isdigit(fen[i]))
+		{// 数字表示空格
+			for (auto j = 0; j < fen[i] - '0'; ++j)
+			{
+				board[y][x + j] = ' ';
+			}
+			x += fen[i] - '0';
+		}
+		else if (fen[i] == '/')
+		{
+			++y;
+			x = 0;
+		}
+		else
+		{
+			board[y][x] = fen[i];
+			++x;
+		}
+	}
+	return true;
 }

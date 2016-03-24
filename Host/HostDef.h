@@ -43,4 +43,11 @@ void slave2Engine();
 独立线程后台运行。
 */
 void engine2Slave();
+/*
+工作函数
+*/
 void work();
+/*
+解码FEN，得到完整的棋面
+*/
+bool decodeFEN(char board[10][10], string fen);
