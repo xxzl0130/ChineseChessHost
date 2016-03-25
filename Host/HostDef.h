@@ -51,3 +51,7 @@ void work();
 解码FEN，得到完整的棋面
 */
 bool decodeFEN(char board[10][10], string fen);
+/*
+设置引擎参数
+*/
+void setEngineOption();

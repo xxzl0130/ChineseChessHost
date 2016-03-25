@@ -132,46 +132,48 @@ void setup()
 	initLCD();
 	initPin();
 	initSerial();
+	initSDPlayer();
 	//initBoard();
 	// 跳线联通则不进行运动
 	Lcd.setCursor(0, 1);
 	Lcd.print("INIT ALL DONE   ");
 	uchr flag = 0;
+	digitalWrite(RowStart, HIGH);
 	while (digitalRead(jumpPinB) == LOW)
 	{
 		digitalWrite(ledPin, flag ^= 1);
-		digitalWrite(RowStart, LOW);
-		for (int i = 0; i < ColCnt; ++i)
+		/*for (int i = 0; i < ColCnt; ++i)
 		{
 			debugSer.print(digitalRead(ColStart + i));
 		}
-		debugSer.print("\n");
-		delay(300);
+		debugSer.print("\n");*/
+		delay(500);
 	}
 }
 
 void loop()
 {
-	/*waitStart();
+	waitStart();
 	start();
 	playing();
-	//reset();*/
+	reset();
+	/*
 	for (uchr i = 0; i < RowCnt; ++i)
 	{
-		digitalWrite(RowStart + i, HIGH);
+		digitalWrite(RowStart + i, LOW);
 		delay(10);
 		for (uchr j = 0; j < ColCnt; ++j)
 		{
 			//debugSer.print(isPress(ColStart + j));
 			debugSer.print(digitalRead(ColStart + j));
-			/*debugSer.print(analogRead(A0 + j));
-			debugSer.print(" ");*/
+			//debugSer.print(analogRead(A0 + j));
+			//debugSer.print(" ");
 		}
 		debugSer.print('\n');
-		digitalWrite(RowStart + i, LOW);
+		digitalWrite(RowStart + i, HIGH);
 	}
 	debugSer.println("--------------------");
-	delay(2000);
+	delay(2000);*/
 }
 
 bool detectPickUpChess()
@@ -406,11 +408,13 @@ bool resign(bool flag)
 
 void waitStart()
 {
+	debugSer.println("waitStart");
 	Lcd.clear();
 	Lcd.setCursor(0, 0);
 	Lcd.print(" Chinese Chess");
 	Lcd.setCursor(0, 1);
 	Lcd.print("Press Start key");
+	playAudio(WelcomeAudio);
 	// 等待按下开始按钮
 	while (true)
 	{
@@ -430,6 +434,7 @@ void selectDiff()
 	Lcd.print(" >Easy< Normal");
 	Lcd.setCursor(0, 1);
 	Lcd.print("  Hard  Master");
+	playAudio(DifficultyAudio);
 	delay(500);
 	while (true)
 	{
@@ -509,6 +514,7 @@ void selectOrder()
 	Lcd.print("Select Color:");
 	Lcd.setCursor(0, 1);
 	Lcd.print("  >Red<  Black  ");
+	playAudio(OrderAudio);
 	delay(500);
 	while (true)
 	{
@@ -669,12 +675,15 @@ void gameOver(GameState state)
 	{
 	case Draw:
 		Lcd.print("Game End!Draw!");
+		playAudio(LoseAudio);
 		break;
 	case Win:
 		Lcd.print("You Win!");
+		playAudio(WinAudio);
 		break;
 	case Lose:
 		Lcd.print("You lose!");
+		playAudio(LoseAudio);
 		break;
 	default:
 		break;
@@ -805,14 +814,14 @@ bool initSerial()
 	Lcd.setCursor(0, 1);
 	Lcd.print("    COM INIT   ");
 	// 初始化与Host通信
-	/*comSer.begin(generalBaudRate);
+	comSer.begin(generalBaudRate);
 	if (!comSer)
 	{
 		digitalWrite(ledPin, HIGH);
 		delay(1000);
 		return false;
-	}*/
-/*
+	}
+	/*
 	while (!comSer.available());
 	for (uchr i = 0; i < 3; ++i)
 	{
@@ -825,8 +834,8 @@ bool initSerial()
 			break;
 		}
 		delay(100);
-	}
-*/
+	}*/
+
 #ifdef DEBUG
 	debugSer.begin(generalBaudRate);
 #endif
@@ -874,7 +883,7 @@ void initPin()
 	}
 	for (char i = 0; i < ColCnt; ++i)
 	{
-		pinMode(ColStart + i, INPUT_PULLUP);
+		pinMode(ColStart + i, INPUT);
 	}
 }
 
@@ -882,7 +891,11 @@ void initSDPlayer()
 {
 	SdPlay.setWorkBuffer(static_cast<uint8_t*>(static_cast<void*>(buf)), MAX_BUF_SIZE);
 	SdPlay.setSDCSPin(CS_PIN);
-	SdPlay.init(AudioMode);
+	if(SdPlay.init(AudioMode))
+	{
+		debugSer.print(F("initialization failed:"));
+		debugSer.println(SdPlay.getLastError());
+	}
 }
 
 void moveChess(String order)
@@ -911,7 +924,13 @@ void moveChess(String order)
 void playAudio(char Filename[])
 {
 	// 设置文件
-	SdPlay.setFile(Filename);
+	//SdPlay.setFile(Filename);
+	if (!SdPlay.setFile(Filename))
+	{
+		debugSer.print(Filename);
+		debugSer.println(F(" not found on card! Error code: "));
+		debugSer.println(SdPlay.getLastError());
+	}
 	SdPlay.worker();
 	SdPlay.play();
 	while (!SdPlay.isStopped())

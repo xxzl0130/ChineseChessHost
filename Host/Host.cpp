@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 	vector<thread> th;
 	hScreen = GetStdHandle(STD_OUTPUT_HANDLE);
 	// 分多线程初始化
-	//th.push_back(thread(initSerialArg, argc, argv));
+	th.push_back(thread(initSerialArg, argc, argv));
 	th.push_back(thread(initEngine));
 	for (auto it = th.begin(); it != th.end(); ++it)
 	{
@@ -155,15 +155,7 @@ void initEngine()
 	cout << buf;
 	SetConsoleTextAttribute(hScreen, FOREGROUND_BLUE);
 	cout << "引擎初始化成功。" << endl;
-	// 启用4线程
-	send2Engine("setoption threads 4\n");
-	// 1G内存
-	send2Engine("setoption hashsize 1024\n");
-	// 风格
-	send2Engine("setoption style normal\n");
-	// 随机性
-	send2Engine("setoption randomness small\n");
-	
+	setEngineOption();
 	return;
 
 engineErr:
@@ -171,7 +163,7 @@ engineErr:
 	exit(1);
 }
 
-inline void send2Engine(const string& msg)
+void send2Engine(const string& msg)
 {
 	WriteFile(hPipeInputWrite, msg.c_str(), msg.length(), nullptr, nullptr);
 	// 设置文字颜色
@@ -180,7 +172,7 @@ inline void send2Engine(const string& msg)
 	cout << msg;
 }
 
-inline void send2Engine(const char* msg)
+void send2Engine(const char* msg)
 {
 	WriteFile(hPipeInputWrite, msg, strlen(msg), nullptr, nullptr);
 	// 设置文字颜色
@@ -331,4 +323,16 @@ bool decodeFEN(char board[10][10], string fen)
 		}
 	}
 	return true;
+}
+
+void setEngineOption()
+{
+	// 启用4线程
+	send2Engine("setoption threads 4\n");
+	// 1G内存
+	send2Engine("setoption hashsize 512\n");
+	// 风格
+	send2Engine("setoption style normal\n");
+	// 随机性
+	send2Engine("setoption randomness small\n");
 }

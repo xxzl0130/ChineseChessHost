@@ -3,8 +3,8 @@
 
 #include "CommonDef.h"
 
-// 缓冲区最大大小(256B)
-#define MAX_BUF_SIZE (256)
+// 缓冲区最大大小(1024B)
+#define MAX_BUF_SIZE (1024u)
 
 // LED针脚
 #define ledPin 13
@@ -121,16 +121,24 @@ public:
 // 棋盘宽度 mm
 #define boardWidth		230
 // 格子宽度
-#define boxWidth		25.4
+#define boxWidth		25
 // 格子高度
-#define boxLength		22.5
+#define boxLength		25
 // 楚河汉界宽度
-#define riverWidth		24
+#define riverWidth		25
 // 棋盘起始横坐标
 #define xAxisStart		0
 // 棋盘起始纵坐标
 #define yAxisStart		0
 // z轴步数
 #define zAxisStep		1024UL
+
+// 各种音频文件名
+#define CheckmateAudio	"che.afs"
+#define DifficultyAudio	"dif.afs"
+#define LoseAudio		"win.afs"
+#define OrderAudio		"ord.afs"
+#define WelcomeAudio	"wel.afs"
+#define WinAudio		"los.afs"
 
 #endif // __SLAVE_DEF_H__
