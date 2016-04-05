@@ -28,7 +28,6 @@ LiquidCrystal_I2C Lcd(0x27, 16, 2);
 ******************
 */
 // 棋盘描述
-/*
 Chess board[BoardRow][BoardCol] = {
 						  // 行号 | 针脚序号(RowStart +)
 	{ r,h,e,a,k,a,e,h,r },// 9    |       0
@@ -43,21 +42,8 @@ Chess board[BoardRow][BoardCol] = {
 	{ R,H,E,A,K,A,E,H,R } // 0    |       9
 //    a b c d e f g h i
 };
-*/
-Chess board[BoardRow][BoardCol] = {
-	// 行号 | 针脚序号(RowStart +)
-	{ b,b,b,a,b,k,e,b,b },// 9    |       0
-	{ b,b,b,b,a,H,b,b,b },// 8    |       1
-	{ b,b,b,b,R,b,b,b,b },// 7    |       2
-	{ b,b,b,b,b,b,b,b,b },// 6    |       3
-	{ p,b,b,b,P,b,b,b,p },// 5    |       4
-	{ b,b,b,b,b,h,P,b,b },// 4    |       5
-	{ P,b,b,b,b,b,b,b,b },// 3    |       6
-	{ b,b,b,b,E,b,b,b,b },// 2    |       7
-	{ b,b,R,b,K,b,b,b,b },// 1    |       8
-	{ b,b,b,A,b,A,E,b,b } // 0    |       9
-						  //    a b c d e f g h i
-};
+// 记录棋子电平状态的数组
+bool boardSate[BoardRow][BoardCol];
 // 玩家当前拿在手里的子，0为自己的子，1为电脑的子
 ChessPoint chessHold[2];
 String tmp;
@@ -182,9 +168,10 @@ bool detectPickUpChess()
 		digitalWrite(RowStart + i, HIGH);
 		for (int j = 0; j < ColCnt; ++j)
 		{
-			if (board[i][j] != b /*该处之前有子*/
-				&& digitalRead(ColStart + j) == LOW /*现在此处无子*/
-				&& isPress(ColStart + j) /*防抖检测*/)
+			//if (board[i][j] != b /*该处之前有子*/
+			//	&& digitalRead(ColStart + j) == LOW /*现在此处无子*/
+			//	&& isPress(ColStart + j) /*防抖检测*/)
+			if(isPress(ColStart + j))
 			{
 				if (isUpperCase(AIColorNumber) != isUpperCase(board[i][j]))
 				{
@@ -192,13 +179,25 @@ bool detectPickUpChess()
 					// 修改游戏状态
 					gameState = PlayerHoldHis;
 					// 记录拿起的是玩家的子
+					if(chessHold[0].chess != b)
+					{// 如果之前记录了拿起棋子，则视为放回
+						board[chessHold[0].row][chessHold[0].col] = chessHold[0].chess;
+					}
 					chessHold[0] = ChessPoint(RowCnt - i - 1, j, board[i][j]);
+					chessHold[0].row = i;
+					chessHold[0].col = j;
 				}
 				else
 				{
 					gameState = PlayerHoldOpp;
 					// 记录拿起的是电脑的子
+					if (chessHold[1].chess != b)
+					{// 如果之前记录了拿起棋子，则视为放回
+						board[chessHold[1].row][chessHold[1].col] = chessHold[1].chess;
+					}
 					chessHold[1] = ChessPoint(RowCnt - i - 1, j, board[i][j]);
+					chessHold[1].row = i;
+					chessHold[1].col = j;
 				}
 				// 该位置修改为无子
 				board[i][j] = b;
@@ -217,9 +216,10 @@ bool detectPutDownChess()
 		digitalWrite(RowStart + i, HIGH);
 		for (int j = 0; j < ColCnt; ++j)
 		{
-			if (board[i][j] == b /*该处之前无子*/
-				&& digitalRead(ColStart + j) == HIGH /*现在此处有子*/
-				&& isPress(ColStart + j) /*防抖检测*/)
+			//if (board[i][j] == b /*该处之前无子*/
+			//	&& digitalRead(ColStart + j) == HIGH /*现在此处有子*/
+			//	&& isPress(ColStart + j) /*防抖检测*/)
+			if (isPress(ColStart + j))
 			{
 				switch (gameState)
 				{
@@ -267,18 +267,28 @@ bool detectPutDownChess()
 				default:
 					break;
 				}
-				// 计算走法
-				char path[5] = { chessHold[0].col + 'a',chessHold[0].row + '0',
-								'a' + j,'0' + i };
-				if(checkPath(path,chessHold[0].chess))
+
+				if (gameState == MoveDone)
 				{
-					return true;
-				}
-				else
-				{
-					// 需要提示
-					gameState = Play;
-					return false;
+					// 计算走法
+					char path[5] = { chessHold[0].col + 'a',chessHold[0].row + '0',
+									'a' + j,'0' + i };
+					if (checkPath(path, chessHold[0].chess))
+					{
+						// 清空持子记录
+						memset(chessHold, 0, sizeof(chessHold));
+						return true;
+					}
+					else
+					{
+						// 需要提示
+						gameState = Play;
+						swap(path[0], path[2]);
+						swap(path[1], path[3]);
+						// 将走错的棋子挪回去
+						moveChess(path);
+						return false;
+					}
 				}
 			}
 		}
@@ -983,15 +993,7 @@ void pickUpChess()
 	// 电磁铁正向通电
 	digitalWrite(MagnetUp, HIGH);
 	digitalWrite(MagnetDown, LOW);
-	delay(500);
-	// 等待主机发信号再移动
-	while(true)
-	{
-		if (debugSer.available() && debugSer.read() > 0)
-		{
-			break;
-		}
-	}
+	delay(200);
 	// 升起滑台
 	upDownMotor.run(FORWORD, zAxisStep,500);
 	
@@ -1004,14 +1006,7 @@ void putDownChess()
 	// 电磁铁反向通电
 	digitalWrite(MagnetDown, HIGH);
 	digitalWrite(MagnetUp, LOW);
-	// 等待主机发信号再移动
-	while (true)
-	{
-		if (debugSer.available() && debugSer.read() > 0)
-		{
-			break;
-		}
-	}
+	delay(100);
 	// 升起滑台
 	upDownMotor.run(FORWORD, zAxisStep, 500);
 }

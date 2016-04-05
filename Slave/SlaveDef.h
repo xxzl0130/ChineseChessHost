@@ -141,4 +141,12 @@ public:
 #define WelcomeAudio	"wel.afs"
 #define WinAudio		"los.afs"
 
+template<typename T>
+inline void swap(T &a,T &b)
+{
+	T c = a;
+	a = b;
+	b = c;
+}
+
 #endif // __SLAVE_DEF_H__
