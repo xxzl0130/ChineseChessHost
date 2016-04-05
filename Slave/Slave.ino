@@ -28,8 +28,9 @@ LiquidCrystal_I2C Lcd(0x27, 16, 2);
 ******************
 */
 // 棋盘描述
+/*
 Chess board[BoardRow][BoardCol] = {
-	// 行号 | 针脚序号(RowStart +)
+						  // 行号 | 针脚序号(RowStart +)
 	{ r,h,e,a,k,a,e,h,r },// 9    |       0
 	{ b,b,b,b,b,b,b,b,b },// 8    |       1
 	{ b,c,b,b,b,b,b,c,b },// 7    |       2
@@ -41,6 +42,21 @@ Chess board[BoardRow][BoardCol] = {
 	{ b,b,b,b,b,b,b,b,b },// 1    |       8
 	{ R,H,E,A,K,A,E,H,R } // 0    |       9
 //    a b c d e f g h i
+};
+*/
+Chess board[BoardRow][BoardCol] = {
+	// 行号 | 针脚序号(RowStart +)
+	{ b,b,b,a,b,k,e,b,b },// 9    |       0
+	{ b,b,b,b,a,H,b,b,b },// 8    |       1
+	{ b,b,b,b,R,b,b,b,b },// 7    |       2
+	{ b,b,b,b,b,b,b,b,b },// 6    |       3
+	{ p,b,b,b,P,b,b,b,p },// 5    |       4
+	{ b,b,b,b,b,h,P,b,b },// 4    |       5
+	{ P,b,b,b,b,b,b,b,b },// 3    |       6
+	{ b,b,b,b,E,b,b,b,b },// 2    |       7
+	{ b,b,R,b,K,b,b,b,b },// 1    |       8
+	{ b,b,b,A,b,A,E,b,b } // 0    |       9
+						  //    a b c d e f g h i
 };
 // 玩家当前拿在手里的子，0为自己的子，1为电脑的子
 ChessPoint chessHold[2];
@@ -142,11 +158,11 @@ void setup()
 	while (digitalRead(jumpPinB) == LOW)
 	{
 		digitalWrite(ledPin, flag ^= 1);
-		/*for (int i = 0; i < ColCnt; ++i)
+		for (int i = 0; i < ColCnt; ++i)
 		{
 			debugSer.print(digitalRead(ColStart + i));
 		}
-		debugSer.print("\n");*/
+		debugSer.print("\n");
 		delay(500);
 	}
 }
@@ -157,23 +173,6 @@ void loop()
 	start();
 	playing();
 	reset();
-	/*
-	for (uchr i = 0; i < RowCnt; ++i)
-	{
-		digitalWrite(RowStart + i, LOW);
-		delay(10);
-		for (uchr j = 0; j < ColCnt; ++j)
-		{
-			//debugSer.print(isPress(ColStart + j));
-			debugSer.print(digitalRead(ColStart + j));
-			//debugSer.print(analogRead(A0 + j));
-			//debugSer.print(" ");
-		}
-		debugSer.print('\n');
-		digitalWrite(RowStart + i, HIGH);
-	}
-	debugSer.println("--------------------");
-	delay(2000);*/
 }
 
 bool detectPickUpChess()
@@ -324,6 +323,7 @@ void executeOrder(String& order)
 	// 走子
 	moveChess(move);
 	// 归位以避免影响视线
+	//moveChess("a9a9");
 	table.move(xAxisStart, yAxisStart);
 }
 
@@ -584,6 +584,7 @@ void start()
 	Lcd.print("  GAME START!  ");
 	Lcd.setCursor(0, 1);
 	Lcd.print(" DRAW   RESIGN ");
+	delay(5000);
 }
 
 void playing()
@@ -634,31 +635,25 @@ void playing()
 			break;
 		}
 	}
-	
-	// 预先设定好的走法
-	/*char order[10][2][5] = {
-		"b2b4","g9e7",
-		"h2e2","b9c7",
-		"h0g2","h9f8",
-		"i0h0","c6c5",
-		"b0a2","g6g5",
-		"a0b0","b7b0",
-		"a2b0","g5g4",
-		"g3g4","a9b9",
-		"b4c4","c5c4"
-	};
-	for (int i = 0; i < 9; ++i)
+	/*
+	while(true)
 	{
-		digitalWrite(ledPin, i & 1);
-		modifyBoard(board, String(order[i][0]));
-		moveChess(String(order[i][1]));
-		//sendBoard(board);
-		//while (!comSer.available());
-		//tmp = readOrderFromHost();
-		//executeOrder(tmp);
-		delay(5000);
-	}*/
-	
+		while(true)
+		{
+			if(debugSer.available())
+			{
+				tmp = debugSer.readString();
+				debugSer.println(tmp);
+				break;
+			}
+		}
+		digitalWrite(ledPin, buf[0] ^= 1);
+		modifyBoard(board, tmp);
+		sendBoard(board);
+		tmp = readOrderFromHost();
+		executeOrder(tmp);
+	}
+	*/
 }
 
 void reset()
@@ -821,7 +816,6 @@ bool initSerial()
 		delay(1000);
 		return false;
 	}
-	/*
 	while (!comSer.available());
 	for (uchr i = 0; i < 3; ++i)
 	{
@@ -834,7 +828,7 @@ bool initSerial()
 			break;
 		}
 		delay(100);
-	}*/
+	}
 
 #ifdef DEBUG
 	debugSer.begin(generalBaudRate);
@@ -891,7 +885,7 @@ void initSDPlayer()
 {
 	SdPlay.setWorkBuffer(static_cast<uint8_t*>(static_cast<void*>(buf)), MAX_BUF_SIZE);
 	SdPlay.setSDCSPin(CS_PIN);
-	if(SdPlay.init(AudioMode))
+	if(!SdPlay.init(AudioMode))
 	{
 		debugSer.print(F("initialization failed:"));
 		debugSer.println(SdPlay.getLastError());
@@ -905,9 +899,15 @@ void moveChess(String order)
 	scr = getChessPos(order[0], order[1]);
 	// 目标坐标
 	dst = getChessPos(order[2], order[3]);
-	if (board[9 - (order[3] - '0')][order[2] - 'a'] != b)
+	if (order[0] == order[2] && order[1] == order[3])
 	{
-		// 目标处有子，即要吃子
+		table.move(dst);
+		return;
+	}
+	if (board[9 - (order[0] - '0')][order[1] - 'a'] != b && // 原来有子
+		board[9 - (order[3] - '0')][order[2] - 'a'] != b)// 目标处也有子，即要吃子
+	{
+		
 		// 先移动到弃子处
 		table.move(dst);
 		pickUpChess();
@@ -948,8 +948,8 @@ Point<double> getAvailableRecycleBin()
 		if (list[i] < 2)
 		{
 			++list[i];
-			bin.y = boxWidth * (i + 1);
-			bin.x = boardLength + boxWidth;
+			bin.y = boxWidth * (i + 2);
+			bin.x = boardLength + boxWidth * 2;
 		}
 	}
 	return bin;
@@ -983,9 +983,18 @@ void pickUpChess()
 	// 电磁铁正向通电
 	digitalWrite(MagnetUp, HIGH);
 	digitalWrite(MagnetDown, LOW);
-	delay(200);
+	delay(500);
+	// 等待主机发信号再移动
+	while(true)
+	{
+		if (debugSer.available() && debugSer.read() > 0)
+		{
+			break;
+		}
+	}
 	// 升起滑台
 	upDownMotor.run(FORWORD, zAxisStep,500);
+	
 }
 
 void putDownChess()
@@ -995,7 +1004,14 @@ void putDownChess()
 	// 电磁铁反向通电
 	digitalWrite(MagnetDown, HIGH);
 	digitalWrite(MagnetUp, LOW);
-	delay(200);
+	// 等待主机发信号再移动
+	while (true)
+	{
+		if (debugSer.available() && debugSer.read() > 0)
+		{
+			break;
+		}
+	}
 	// 升起滑台
 	upDownMotor.run(FORWORD, zAxisStep, 500);
 }

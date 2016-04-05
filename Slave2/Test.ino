@@ -1,40 +1,30 @@
-const unsigned char pulsePin1 = 10, dirPin1 = 11;
-const unsigned char pulsePin2 = 6, dirPin2 = 7;
+#include"DataSelection.h"
+
+DataSelection data(36, 32, 3, 35, INPUT);
 
 void setup()
 {
-	pinMode(pulsePin1, OUTPUT);
-	pinMode(dirPin1, OUTPUT);
-	pinMode(pulsePin2, OUTPUT);
-	pinMode(dirPin2, OUTPUT);
+	for (int i = 22; i <= 32;++i)
+	{
+		pinMode(i, OUTPUT);
+		digitalWrite(i, HIGH);
+	}
 	pinMode(13, OUTPUT);
-	digitalWrite(13, LOW);
-	delay(500);
+	Serial.begin(9600);
 }
 
-inline void setDir(unsigned char dir)
-{
-	digitalWrite(dirPin1, dir);
-	digitalWrite(dirPin2, dir);
-}
-
-void step1()
-{
-	digitalWrite(pulsePin1, HIGH);
-	delayMicroseconds(20);
-	digitalWrite(pulsePin1, LOW);
-	delayMicroseconds(20);
-}
 
 void loop()
 {
-	static char flag = 0;
-	setDir(flag ^= 1);
-	digitalWrite(13, flag);
-	for (int i = 0; i < 1024;++i)
+	static char k = 0;
+	digitalWrite(22, k ^= 1);
+	digitalWrite(13, k);
+	for (int i = 0; i < 8;++i)
 	{
-		step1();
-		delayMicroseconds(500);
+		data.setPort(i);
+		delay(1);
+		Serial.print((int)data.getDigitalRead());
 	}
+	Serial.print("\n");
 	delay(1000);
 }

@@ -79,7 +79,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DataSelection.h" />
     <ClInclude Include="__vm\.Slave2.vsarduino.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DataSelection.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
