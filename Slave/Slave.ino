@@ -47,6 +47,7 @@ Chess board[BoardRow][BoardCol] = {
 bool boardSate[BoardRow][BoardCol];
 // 玩家当前拿在手里的子，0为自己的子，1为电脑的子
 ChessPoint chessHold[2];
+// 字符串缓冲
 String tmp;
 char buf[MAX_BUF_SIZE];
 // 对局回合数
@@ -105,8 +106,6 @@ void sendBoard(Chess board[BoardRow][BoardCol], GameState state = Play);
 bool isPress(uint8_t pin, uint8_t state = HIGH);
 // 初始化串口
 bool initSerial();
-// 初始化棋盘，设置难度、先手等
-void initBoard();
 // 初始化LCD
 void initLCD();
 // 初始化GPIO Pin
@@ -129,6 +128,8 @@ void pickUpChess();
 void putDownChess();
 // 检查走子合法性
 bool checkPath(String path, Chess chess);
+// 重新连接
+void reconnect();
 
 void setup()
 {
@@ -464,11 +465,13 @@ void selectDiff()
 				Lcd.setCursor(0, 0);
 				Lcd.print(" >Easy< Normal ");
 				diff = easy;
+				playAudio(EasyAudio);
 				break;
 			case normal:
 				Lcd.setCursor(0, 0);
 				Lcd.print(" >Easy< Normal ");
 				diff = easy;
+				playAudio(EasyAudio);
 				break;
 			case hard:
 				Lcd.setCursor(0, 0);
@@ -476,11 +479,13 @@ void selectDiff()
 				Lcd.setCursor(0, 1);
 				Lcd.print("  Hard  Master ");
 				diff = normal;
+				playAudio(NormalAudio);
 				break;
 			case master:
 				Lcd.setCursor(0, 1);
 				Lcd.print(" >Hard< Master ");
 				diff = hard;
+				playAudio(HardAudio);
 				break;
 			}
 			delay(200);
@@ -494,6 +499,7 @@ void selectDiff()
 				Lcd.setCursor(0, 0);
 				Lcd.print("  Easy >Normal<");
 				diff = normal;
+				playAudio(NormalAudio);
 				break;
 			case normal:
 				Lcd.setCursor(0, 0);
@@ -501,11 +507,13 @@ void selectDiff()
 				Lcd.setCursor(0, 1);
 				Lcd.print(" >Hard< Master ");
 				diff = hard;
+				playAudio(HardAudio);
 				break;
 			case hard:
 				Lcd.setCursor(0, 1);
 				Lcd.print("  Hard >Master<");
 				diff = master;
+				playAudio(MasterAudio);
 				break;
 			case master:
 				// master已无法提高难度
@@ -515,6 +523,7 @@ void selectDiff()
 			delay(200);
 		}
 	}
+	playAudio(DiffEndAudio);
 }
 
 void selectOrder()
@@ -526,7 +535,6 @@ void selectOrder()
 	Lcd.setCursor(0, 1);
 	Lcd.print("  >Red<  Black  ");
 	playAudio(OrderAudio);
-	delay(500);
 	while (true)
 	{
 		if (isPress(StartKey, LOW))
@@ -600,8 +608,22 @@ void start()
 
 void playing()
 {
+	static unsigned long waitTime = millis(), hitTime = millis();
+	static bool waitTimeFlag1, waitTimeFlag2,hitFlag = true;
 	while (true)
 	{
+		if(millis() - hitTime > 5000)
+		{// 5s检查一次连接
+			if(hitFlag == true)
+			{// 上次的回复已收到
+				comSer.println(testComSlave);
+				hitFlag = false;
+			}
+			else
+			{
+				reconnect();
+			}
+		}
 		// 求和
 		if (isPress(StartKey, LOW))
 		{
@@ -626,6 +648,9 @@ void playing()
 			Lcd.print(" COMPUTER TURN  ");
 			sendBoard(board);
 			gameState = WaitOrder;
+			waitTime = millis();
+			// 记录等待指令的时间
+			waitTimeFlag1 = waitTimeFlag2 = false;
 			break;
 		case WaitOrder:
 			// 如果主机发来了指令
@@ -638,12 +663,32 @@ void playing()
 				Lcd.setCursor(0, 0);
 				Lcd.print("     YOUR TURN  ");
 			}
+			if(millis() - waitTime > 5000 && !waitTimeFlag1)
+			{// 等待5s
+				playAudio(WaitLongAudio1);
+				waitTimeFlag1 = true;
+			}
+			if(millis() - waitTime > 30000 && !waitTimeFlag2)
+			{
+				playAudio(WaitLongAudio2);
+				waitTimeFlag2 = true;
+			}
 			break;
 		case Win:case Lose:case Draw:case Resign:
 			// 这4个状态是已经进入gameOver的，所以结束本函数
 			return;
 		default:
 			break;
+		}
+		// 如果主机发来了连接测试回复
+		if (comSer.available())
+		{
+			tmp = comSer.readString();
+			if (strstr(tmp.c_str(), testComHost) != NULL)
+			{ // 找到应有字符串，表示连接成功
+				hitFlag = true;
+				break;
+			}
 		}
 	}
 	/*
@@ -847,12 +892,6 @@ bool initSerial()
 	return true;
 }
 
-void initBoard()
-{
-	Lcd.setCursor(0, 1);
-	Lcd.print("BOARD OK!      ");
-}
-
 void initLCD()
 {
 	Lcd.init();
@@ -997,7 +1036,6 @@ void pickUpChess()
 	delay(200);
 	// 升起滑台
 	upDownMotor.run(FORWORD, zAxisStep,500);
-	
 }
 
 void putDownChess()
@@ -1185,5 +1223,21 @@ bool checkPath(String path, Chess chess)
 		}
 	default:
 		return false;
+	}
+}
+
+void reconnect()
+{
+	while(true)
+	{
+		playAudio(DisconnectAudio);
+		comSer.println(testComSlave);
+		tmp = comSer.readString();
+		if (strstr(tmp.c_str(), testComHost) != NULL)
+		{ // 找到应有字符串，表示连接成功
+			playAudio(ReconnectAudio);
+			break;
+		}
+		delay(3000);
 	}
 }

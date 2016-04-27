@@ -221,25 +221,33 @@ void slave2Engine()
 				string tmp;
 				// 读一整行
 				slave.readline(tmp);
-				if (tmp[tmp.length() - 1] != '\n')
-				{
-					// 保证有换行
-					tmp += "\n";
+				if(tmp.find(testComSlave))
+				{// 如果是检查连接的
+					// 发回字符串
+					slave.write(testComHost);
 				}
-				// 发送至引擎
-				send2Engine(tmp);
-				// 检查是否退出
-				if (tmp.find("quit") != string::npos)
+				else
 				{
-					cout << "从机已退出，程序结束。" << endl;
-					break;
-				}
-				if(decodeFEN(board,tmp))
-				{
-					for (auto i = 0; i < 10;++i)
+					if (tmp[tmp.length() - 1] != '\n')
 					{
-						SetConsoleTextAttribute(hScreen, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
-						cout << board[i] << endl;
+						// 保证有换行
+						tmp += "\n";
+					}
+					// 发送至引擎
+					send2Engine(tmp);
+					// 检查是否退出
+					if (tmp.find("quit") != string::npos)
+					{
+						cout << "从机已退出，程序结束。" << endl;
+						break;
+					}
+					if (decodeFEN(board, tmp))
+					{
+						for (auto i = 0; i < 10;++i)
+						{
+							SetConsoleTextAttribute(hScreen, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+							cout << board[i] << endl;
+						}
 					}
 				}
 			}
@@ -328,7 +336,7 @@ void setEngineOption()
 {
 	// 启用4线程
 	send2Engine("setoption threads 4\n");
-	// 1G内存
+	// 内存
 	send2Engine("setoption hashsize 512\n");
 	// 风格
 	send2Engine("setoption style normal\n");

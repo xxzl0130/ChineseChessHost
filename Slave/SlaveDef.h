@@ -140,6 +140,15 @@ public:
 #define OrderAudio		"ord.afs"
 #define WelcomeAudio	"wel.afs"
 #define WinAudio		"los.afs"
+#define EasyAudio		"eas.afs"
+#define NormalAudio		"nor.afs"
+#define HardAudio		"har.afs"
+#define MasterAudio		"mas.afs"
+#define DiffEndAudio	"die.afs"
+#define WaitLongAudio1	"wl1.afs"
+#define	WaitLongAudio2	"wl2.afs"
+#define DisconnectAudio	"dis.afs"
+#define ReconnectAudio	"rec.afs"
 
 template<typename T>
 inline void swap(T &a,T &b)
