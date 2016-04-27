@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include "slave/CommonDef.h"
+#include "../slave/CommonDef.h"
 using std::string;
 
 // ÏóÆåÒýÇæµØÖ·

@@ -1,11 +1,11 @@
-#include <Wire/Wire.h>
-#include <LiquidCrystal_I2C\LiquidCrystal_I2C.h>
+#include <Wire/src/Wire.h>
+#include <LiquidCrystal_I2C/LiquidCrystal_I2C.h>
 #include <string.h>
 #include "CommonDef.h"
 #include "SlaveDef.h"
 #include "StepperMotor.h"
 #include "SlipTable.h"
-#include "SimpleSDAudio\SimpleSDAudio.h"
+#include "SimpleSDAudio/SimpleSDAudio.h"
 /*
 Todo list:
 // 开始
@@ -19,6 +19,7 @@ void reset();
 
 //LCD1602
 LiquidCrystal_I2C Lcd(0x27, 16, 2);
+
 /*
 显示屏样式：
 0123456789012345

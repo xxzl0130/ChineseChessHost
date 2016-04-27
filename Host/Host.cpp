@@ -7,14 +7,13 @@
 #include <vector>
 
 #include "serial/serial.h"
-#include "MySerial.h"
 #include "HostDef.h"
-#include "slave/CommonDef.h"
+#include "../slave/CommonDef.h"
 
 using namespace std;
 using namespace serial;
 
-MySerial slave;
+Serial slave;
 char buf[MAX_BUF_SIZE + 1];
 char board[10][10];
 // 创建两个管道
@@ -198,7 +197,7 @@ bool readOrderFromEngine(char* buf, size_t size)
 		{
 			memset(order, 0, sizeof(order));
 			// 将bestmove那一整行复制出来
-			for (auto i = 0, j = strchr(ptr, '\n') - ptr; i < j; ++i)
+			for (auto i = 0, j = (int)(strchr(ptr, '\n') - ptr); i < j; ++i)
 				order[i] = ptr[i];
 			// 再复制回buf
 			strcpy_s(buf, size, order);
