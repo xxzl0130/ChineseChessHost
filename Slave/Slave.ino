@@ -44,7 +44,7 @@ Chess board[BoardRow][BoardCol] = {
 //    a b c d e f g h i
 };
 // 记录棋子电平状态的数组
-bool boardSate[BoardRow][BoardCol];
+bool boardState[BoardRow][BoardCol];
 // 玩家当前拿在手里的子，0为自己的子，1为电脑的子
 ChessPoint chessHold[2];
 // 字符串缓冲
@@ -68,6 +68,7 @@ SlipTable table(StepperMotor(6, 7, circleStep), StepperMotor(8, 9, circleStep),
 // 升降台
 StepperMotor upDownMotor(10, 11, circleStep);
 
+bool detectMoveChess();
 // 检测拿起棋子
 bool detectPickUpChess();
 // 检测放下棋子
@@ -106,6 +107,8 @@ void sendBoard(Chess board[BoardRow][BoardCol], GameState state = Play);
 bool isPress(uint8_t pin, uint8_t state = HIGH);
 // 初始化串口
 bool initSerial();
+// 初始化棋盘状态
+void initBoard();
 // 初始化LCD
 void initLCD();
 // 初始化GPIO Pin
@@ -130,6 +133,10 @@ void putDownChess();
 bool checkPath(String path, Chess chess);
 // 重新连接
 void reconnect();
+// 棋盘行引脚清零
+void rowClear();
+// 生成路径
+String generatePath(ChessPoint scr, ChessPoint dst);
 
 void setup()
 {
@@ -161,6 +168,42 @@ void loop()
 	start();
 	playing();
 	reset();
+}
+
+bool detectMoveChess()
+{
+	static ChessPoint lastChangeChess(-1, -1, b);
+	rowClear();
+	for (int i = 0;i < RowCnt;++i)
+	{
+		// 拉高一行
+		digitalWrite(RowStart + i, HIGH);
+		for (int j = 0;j < ColCnt;++j)
+		{
+			if(boardState[i][j] != isPress(ColStart + j))
+			{
+				if(lastChangeChess.row == -1)
+				{// 初始状态
+					lastChangeChess = ChessPoint(i, j, board[i][j]);
+					return false;
+				}
+				if(i == lastChangeChess.row && j == lastChangeChess.col)
+				{// 这个子是之前按下的子
+					return false;
+				}
+				else if(checkPath(generatePath(lastChangeChess,ChessPoint(i,j,board[i][j])),lastChangeChess.chess))
+				{// 如果变化的是个合法的路径则认为是走子
+					return true;
+				}
+				else
+				{
+					lastChangeChess = ChessPoint(i, j, board[i][j]);
+					return false;
+				}
+			}
+		}
+	}
+	return false;
 }
 
 bool detectPickUpChess()
@@ -637,7 +680,11 @@ void playing()
 		switch (gameState)
 		{
 		case Play:
-			detectPickUpChess();
+			//detectPickUpChess();
+			if (detectMoveChess())
+			{
+				gameState = MoveDone;
+			}
 			break;
 		case PlayerHoldHis:case PlayerHoldOpp:case PlayerHoldTwo:
 			detectPutDownChess();
@@ -891,6 +938,21 @@ bool initSerial()
 #endif
 	return true;
 }
+
+void initBoard()
+{
+	rowClear();
+	// 读取初始棋盘接触状态
+	for (int i = 0; i < RowCnt; ++i)
+	{
+		digitalWrite(RowStart + i, HIGH);
+		for (int j = 0; j < ColCnt; ++j)
+		{
+			boardState[i][j] = isPress(ColStart + j);
+		}
+		digitalWrite(RowStart + i, LOW);
+	}
+} 
 
 void initLCD()
 {
@@ -1240,4 +1302,22 @@ void reconnect()
 		}
 		delay(3000);
 	}
+}
+
+void rowClear()
+{
+	for (int i = 0;i < RowCnt;++i)
+	{
+		digitalWrite(RowStart + i, LOW);
+	}
+}
+
+String generatePath(ChessPoint scr, ChessPoint dst)
+{
+	String tmp;
+	tmp += 'a' + scr.col;
+	tmp += '0' + (9 - scr.row);
+	tmp += 'a' + dst.col;
+	tmp += '0' + (9 - dst.row);
+	return tmp;
 }
