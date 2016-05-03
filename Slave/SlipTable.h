@@ -39,7 +39,7 @@ private:
 	// 尺寸 单位mm
 	double xLength, yLength;
 	// 限位开关
-	uchr xSwitch1, xSwitch2, ySwitch1, ySwitch2;
+	uchr xSwitch, ySwitch;
 	// 螺距
 	double screwPitch;
 	// 每步长度
@@ -50,7 +50,7 @@ public:
 	/*
 	构造函数，进行IO口的初始化，数据的初始化
 	*/
-	SlipTable(StepperMotor x, StepperMotor y, double xLen, double yLen, uchr xS1, uchr xS2, uchr yS1, uchr yS2,float sP);
+	SlipTable(StepperMotor x, StepperMotor y, double xLen, double yLen, uchr xS, uchr yS,float sP);
 	/*
 	获取当前位置
 	返回值为结构体Point

@@ -134,24 +134,39 @@ public:
 #define zAxisStep		1024UL
 
 // 各种音频文件名
+// 将军
 #define CheckmateAudio	"che.afs"
+// 选择难度
 #define DifficultyAudio	"dif.afs"
+// 玩家赢
 #define LoseAudio		"win.afs"
+// 选择顺序
 #define OrderAudio		"ord.afs"
+// 欢迎
 #define WelcomeAudio	"wel.afs"
+// 玩家输
 #define WinAudio		"los.afs"
+// “简单”
 #define EasyAudio		"eas.afs"
+// “普通”
 #define NormalAudio		"nor.afs"
+// “困难”
 #define HardAudio		"har.afs"
+// “大师”
 #define MasterAudio		"mas.afs"
+// 选择难度结束
 #define DiffEndAudio	"die.afs"
+// 电脑思考太久（5s) 提示“让我想想”之类
 #define WaitLongAudio1	"wl1.afs"
+// 电脑思考太久（30s) 提示“这步棋很难走”之类
 #define	WaitLongAudio2	"wl2.afs"
+// 与主机断开连接
 #define DisconnectAudio	"dis.afs"
+// 重新连接
 #define ReconnectAudio	"rec.afs"
 
 template<typename T>
-inline void swap(T &a,T &b)
+void swap(T &a,T &b)
 {
 	T c = a;
 	a = b;

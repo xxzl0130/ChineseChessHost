@@ -7,14 +7,8 @@
 #include "SlipTable.h"
 #include "SimpleSDAudio/SimpleSDAudio.h"
 /*
-Todo list:
-// 开始
-void start();
-// 游戏进行
-void playing(); // 需要调整
-// 重置棋盘
-void reset();
-
+Todo:
+sdcard
 */
 
 //LCD1602
@@ -64,7 +58,7 @@ DIFFICULTY diff = easy;
 GameState gameState = Play;
 // 滑台
 SlipTable table(StepperMotor(6, 7, circleStep), StepperMotor(8, 9, circleStep),
-	boardLength, boardWidth, 46, 47, 48, 49, pitch);
+	boardLength, boardWidth, 46, 47, pitch);
 // 升降台
 StepperMotor upDownMotor(10, 11, circleStep);
 
@@ -144,22 +138,11 @@ void setup()
 	initPin();
 	initSerial();
 	initSDPlayer();
-	//initBoard();
+	initBoard();
 	// 跳线联通则不进行运动
 	Lcd.setCursor(0, 1);
 	Lcd.print("INIT ALL DONE   ");
-	uchr flag = 0;
-	digitalWrite(RowStart, HIGH);
-	while (digitalRead(jumpPinB) == LOW)
-	{
-		digitalWrite(ledPin, flag ^= 1);
-		for (int i = 0; i < ColCnt; ++i)
-		{
-			debugSer.print(digitalRead(ColStart + i));
-		}
-		debugSer.print("\n");
-		delay(500);
-	}
+	
 }
 
 void loop()
@@ -193,6 +176,8 @@ bool detectMoveChess()
 				}
 				else if(checkPath(generatePath(lastChangeChess,ChessPoint(i,j,board[i][j])),lastChangeChess.chess))
 				{// 如果变化的是个合法的路径则认为是走子
+					// 修改棋盘
+					modifyBoard(board, generatePath(lastChangeChess, ChessPoint(i, j, board[i][j])));
 					return true;
 				}
 				else
@@ -927,7 +912,7 @@ bool initSerial()
 		{ // 找到应有字符串，表示连接成功
 			comSer.println(testComSlave); // 回复
 			Lcd.setCursor(0, 1);
-			Lcd.print("SERIAL OK!");
+			Lcd.print("SERIAL OK!   ");
 			break;
 		}
 		delay(100);
@@ -941,6 +926,7 @@ bool initSerial()
 
 void initBoard()
 {
+	table.reset();
 	rowClear();
 	// 读取初始棋盘接触状态
 	for (int i = 0; i < RowCnt; ++i)
@@ -985,23 +971,27 @@ void initPin()
 	for (int i = 0; i < RowCnt; ++i)
 	{
 		pinMode(RowStart + i, OUTPUT);
-		digitalWrite(RowStart + i, LOW);
+		digitalWrite(RowStart + i, HIGH);
 	}
 	for (char i = 0; i < ColCnt; ++i)
 	{
-		pinMode(ColStart + i, INPUT);
+		pinMode(ColStart + i, INPUT_PULLUP);
 	}
 }
 
 void initSDPlayer()
 {
+	Lcd.setCursor(0, 1);
+	Lcd.print("  SDCARD INIT  ");
 	SdPlay.setWorkBuffer(static_cast<uint8_t*>(static_cast<void*>(buf)), MAX_BUF_SIZE);
 	SdPlay.setSDCSPin(CS_PIN);
 	if(!SdPlay.init(AudioMode))
 	{
-		debugSer.print(F("initialization failed:"));
-		debugSer.println(SdPlay.getLastError());
+		comSer.print(F("initialization failed:"));
+		comSer.println(SdPlay.getLastError());
 	}
+	Lcd.setCursor(0, 1);
+	Lcd.print("  SDCARD OK  ");
 }
 
 void moveChess(String order)

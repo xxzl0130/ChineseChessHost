@@ -1,14 +1,11 @@
 #include "SlipTable.h"
 #include <Arduino.h>
 
-SlipTable::SlipTable(StepperMotor x, StepperMotor y, double xLen, double yLen, uchr xS1, uchr xS2, uchr yS1, uchr yS2, float sP)
-	:pos(0,0),xLength(xLen),yLength(yLen),xSwitch1(xS1),xSwitch2(xS2),
-	ySwitch1(yS1), ySwitch2(yS2),screwPitch(sP), xAxis(x),yAxis(y)
+SlipTable::SlipTable(StepperMotor x, StepperMotor y, double xLen, double yLen, uchr xS,uchr yS, float sP)
+	:pos(0,0),xLength(xLen),yLength(yLen),xSwitch(xS),ySwitch(yS),screwPitch(sP), xAxis(x),yAxis(y)
 {
-	pinMode(xSwitch1, INPUT_PULLUP);
-	pinMode(xSwitch2, INPUT_PULLUP);
-	pinMode(ySwitch1, INPUT_PULLUP);
-	pinMode(xSwitch2, INPUT_PULLUP);
+	pinMode(xSwitch, INPUT_PULLUP);
+	pinMode(ySwitch, INPUT_PULLUP);
 	LengthPerStep = screwPitch / static_cast<double>(xAxis.getStepPerCircle());
 }
 
@@ -19,16 +16,17 @@ Point<double> SlipTable::getPos() const
 
 void SlipTable::reset()
 {
-	while (digitalRead(xSwitch1) == HIGH)
-	{// 接触限位开关后信号为低 停止
-		xAxis.run(BACKWORD, 1);
+	while (digitalRead(xSwitch) == HIGH)
+	{// 接触限位开关后信号为low 停止
+		xAxis.run(FORWORD, 1);
 	}
-	while (digitalRead(ySwitch1) == HIGH)
-	{// 接触限位开关后信号为低 停止
-		yAxis.run(BACKWORD, 1);
+	while (digitalRead(ySwitch) == HIGH)
+	{// 接触限位开关后信号为low 停止
+		yAxis.run(FORWORD, 1);
 	}
-	pos.x = 0.0;
-	pos.y = 0.0;
+	pos.x = xLength;
+	pos.y = yLength;
+	move(0, 0);
 }
 
 void SlipTable::move(Point<double> pos)
@@ -65,21 +63,6 @@ void SlipTable::move(double x, double y)
 	Direction xDir = x > pos.x ? FORWORD : BACKWORD;
 	// y轴方向
 	Direction yDir = y > pos.y ? FORWORD : BACKWORD;
-	/*Serial1.print("(");
-	Serial1.print(x);
-	Serial1.print(",");
-	Serial1.print(y);
-	Serial1.print(") ");
-	Serial1.print("(");
-	Serial1.print(pos.x);
-	Serial1.print(",");
-	Serial1.print(pos.y);
-	Serial1.print(") ");
-	Serial1.print(x > pos.x);
-	Serial1.print(xDir);
-	Serial1.print(y > pos.y);
-	Serial1.print(yDir);
-	Serial1.print("\n");*/
 
 	// 以实际走的步数计算位置，避免累积误差
 	pos.x += xAxisToGo * LengthPerStep * (xDir == FORWORD ? 1 : -1);
