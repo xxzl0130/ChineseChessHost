@@ -135,10 +135,10 @@ String generatePath(ChessPoint scr, ChessPoint dst);
 void setup()
 {
 	initLCD();
-	initPin();
-	initSerial();
+	//initPin();
+	//initSerial();
 	initSDPlayer();
-	initBoard();
+	//initBoard();
 	// 跳线联通则不进行运动
 	Lcd.setCursor(0, 1);
 	Lcd.print("INIT ALL DONE   ");
@@ -983,9 +983,9 @@ void initSDPlayer()
 {
 	Lcd.setCursor(0, 1);
 	Lcd.print("  SDCARD INIT  ");
-	SdPlay.setWorkBuffer(static_cast<uint8_t*>(static_cast<void*>(buf)), MAX_BUF_SIZE);
-	SdPlay.setSDCSPin(CS_PIN);
-	if(!SdPlay.init(AudioMode))
+	//SdPlay.setWorkBuffer(static_cast<uint8_t*>(static_cast<void*>(buf)), MAX_BUF_SIZE);
+	SdPlay.setSDCSPin(53);
+	if(!SdPlay.init(SSDA_MODE_FULLRATE | SSDA_MODE_STEREO | SSDA_MODE_AUTOWORKER))
 	{
 		comSer.print(F("initialization failed:"));
 		comSer.println(SdPlay.getLastError());
