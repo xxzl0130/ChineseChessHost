@@ -8,7 +8,7 @@
 #include "SimpleSDAudio/SimpleSDAudio.h"
 /*
 Todo:
-sdcard
+test
 */
 
 //LCD1602
@@ -968,7 +968,7 @@ void initPin()
 	pinMode(jumpPinB, INPUT_PULLUP);
 	digitalWrite(jumpPinA, LOW);
 	digitalWrite(MagnetUp, LOW);
-	for (int i = 0; i < RowCnt; ++i)
+	for (char i = 0; i < RowCnt; ++i)
 	{
 		pinMode(RowStart + i, OUTPUT);
 		digitalWrite(RowStart + i, HIGH);
@@ -984,8 +984,8 @@ void initSDPlayer()
 	Lcd.setCursor(0, 1);
 	Lcd.print("  SDCARD INIT  ");
 	SdPlay.setWorkBuffer(static_cast<uint8_t*>(static_cast<void*>(buf)), MAX_BUF_SIZE);
-	SdPlay.setSDCSPin(CS_PIN);
-	if(!SdPlay.init(AudioMode))
+	SdPlay.setSDCSPin(53);
+	if(!SdPlay.init(SSDA_MODE_FULLRATE | SSDA_MODE_STEREO | SSDA_MODE_AUTOWORKER))
 	{
 		comSer.print(F("initialization failed:"));
 		comSer.println(SdPlay.getLastError());

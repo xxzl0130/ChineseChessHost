@@ -4,7 +4,7 @@
 #include "CommonDef.h"
 
 // 缓冲区最大大小(1024B)
-#define MAX_BUF_SIZE (1024u)
+#define MAX_BUF_SIZE (2048L)
 
 // LED针脚
 #define ledPin 13
