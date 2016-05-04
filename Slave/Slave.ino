@@ -8,7 +8,7 @@
 #include "SimpleSDAudio/SimpleSDAudio.h"
 /*
 Todo:
-sdcard
+test
 */
 
 //LCD1602
