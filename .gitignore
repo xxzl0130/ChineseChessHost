@@ -9,6 +9,9 @@
 
 # Arduino
 __vm/
+LiquidCrystal_I2C/
+SimpleSDAudio/
+Wire/
 
 # Chinesechess AI engine
 Engine/
