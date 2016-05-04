@@ -90,7 +90,7 @@ enum Chess
 	// 兵&卒
 	p = 'p', P = 'P',
 	// 空
-	b = '\0'
+	b = 'b'
 };
 
 class ChessPoint
@@ -132,6 +132,10 @@ public:
 #define yAxisStart		0
 // z轴步数
 #define zAxisStep		1024UL
+// x轴长度
+#define xAxisLength		260
+// y轴长度
+#define yAxisLength		260
 
 // 各种音频文件名
 // 将军

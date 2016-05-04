@@ -58,7 +58,7 @@ DIFFICULTY diff = easy;
 GameState gameState = Play;
 // 滑台
 SlipTable table(StepperMotor(6, 7, circleStep), StepperMotor(8, 9, circleStep),
-	boardLength, boardWidth, 46, 47, pitch);
+	xAxisLength, yAxisLength, 46, 47, pitch);
 // 升降台
 StepperMotor upDownMotor(10, 11, circleStep);
 
@@ -135,14 +135,30 @@ String generatePath(ChessPoint scr, ChessPoint dst);
 void setup()
 {
 	initLCD();
-	//initPin();
-	//initSerial();
+	initPin();
+	initSerial();
 	initSDPlayer();
-	//initBoard();
+	initBoard();
 	// 跳线联通则不进行运动
 	Lcd.setCursor(0, 1);
 	Lcd.print("INIT ALL DONE   ");
-	
+	while(true)
+	{
+		debugSer.println(detectMoveChess());
+		/*rowClear();
+		for (int i = 0;i < RowCnt;++i)
+		{
+			digitalWrite(RowStart + i, LOW);
+			for (int j = 0;j < ColCnt;++j)
+			{
+				debugSer.print(digitalRead(ColStart + j));
+			}
+			debugSer.print('\n');
+			digitalWrite(RowStart + i, HIGH);
+		}
+		debugSer.println("------------------");*/
+		delay(1000);
+	}
 }
 
 void loop()
@@ -156,15 +172,27 @@ void loop()
 bool detectMoveChess()
 {
 	static ChessPoint lastChangeChess(-1, -1, b);
+	static bool t;
 	rowClear();
 	for (int i = 0;i < RowCnt;++i)
 	{
 		// 拉高一行
-		digitalWrite(RowStart + i, HIGH);
+		digitalWrite(RowStart + i, LOW);
 		for (int j = 0;j < ColCnt;++j)
 		{
-			if(boardState[i][j] != isPress(ColStart + j))
+			if(boardState[i][j] != (t = isPress(ColStart + j)))
 			{
+				debugSer.print(i);
+				debugSer.print(',');
+				debugSer.print(j);
+				debugSer.print(',');
+				debugSer.println((char)(board[i][j]));
+				debugSer.print((int)(lastChangeChess.row));
+				debugSer.print(',');
+				debugSer.print((int)(lastChangeChess.col));
+				debugSer.print(',');
+				debugSer.println((char)(lastChangeChess.chess));
+				boardState[i][j] = t;
 				if(lastChangeChess.row == -1)
 				{// 初始状态
 					lastChangeChess = ChessPoint(i, j, board[i][j]);
@@ -174,19 +202,25 @@ bool detectMoveChess()
 				{// 这个子是之前按下的子
 					return false;
 				}
-				else if(checkPath(generatePath(lastChangeChess,ChessPoint(i,j,board[i][j])),lastChangeChess.chess))
+				String path = generatePath(lastChangeChess, ChessPoint(i, j, board[lastChangeChess.row][lastChangeChess.col]));
+				debugSer.println(path);
+				if(checkPath(path, lastChangeChess.chess))
 				{// 如果变化的是个合法的路径则认为是走子
 					// 修改棋盘
-					modifyBoard(board, generatePath(lastChangeChess, ChessPoint(i, j, board[i][j])));
+					modifyBoard(board, path);
+					// 重置为初始状态
+					lastChangeChess = ChessPoint(-1, -1, b);
 					return true;
 				}
 				else
 				{
+					// 记录变化棋子
 					lastChangeChess = ChessPoint(i, j, board[i][j]);
 					return false;
 				}
 			}
 		}
+		digitalWrite(RowStart + i, HIGH);
 	}
 	return false;
 }
@@ -905,6 +939,7 @@ bool initSerial()
 		return false;
 	}
 	while (!comSer.available());
+	/*comSer.println(testComSlave);
 	for (uchr i = 0; i < 3; ++i)
 	{
 		tmp = comSer.readString();
@@ -916,7 +951,7 @@ bool initSerial()
 			break;
 		}
 		delay(100);
-	}
+	}*/
 
 #ifdef DEBUG
 	debugSer.begin(generalBaudRate);
@@ -926,17 +961,17 @@ bool initSerial()
 
 void initBoard()
 {
-	table.reset();
+	//table.reset();
 	rowClear();
 	// 读取初始棋盘接触状态
 	for (int i = 0; i < RowCnt; ++i)
 	{
-		digitalWrite(RowStart + i, HIGH);
+		digitalWrite(RowStart + i, LOW);
 		for (int j = 0; j < ColCnt; ++j)
 		{
 			boardState[i][j] = isPress(ColStart + j);
 		}
-		digitalWrite(RowStart + i, LOW);
+		digitalWrite(RowStart + i, HIGH);
 	}
 } 
 
@@ -968,7 +1003,7 @@ void initPin()
 	pinMode(jumpPinB, INPUT_PULLUP);
 	digitalWrite(jumpPinA, LOW);
 	digitalWrite(MagnetUp, LOW);
-	for (int i = 0; i < RowCnt; ++i)
+	for (char i = 0; i < RowCnt; ++i)
 	{
 		pinMode(RowStart + i, OUTPUT);
 		digitalWrite(RowStart + i, HIGH);
@@ -1298,16 +1333,16 @@ void rowClear()
 {
 	for (int i = 0;i < RowCnt;++i)
 	{
-		digitalWrite(RowStart + i, LOW);
+		digitalWrite(RowStart + i, HIGH);
 	}
 }
 
 String generatePath(ChessPoint scr, ChessPoint dst)
 {
 	String tmp;
-	tmp += 'a' + scr.col;
-	tmp += '0' + (9 - scr.row);
-	tmp += 'a' + dst.col;
-	tmp += '0' + (9 - dst.row);
+	tmp += static_cast<char>('a' + scr.col);
+	tmp += static_cast<char>('0' + (9 - scr.row));
+	tmp += static_cast<char>('a' + dst.col);
+	tmp += static_cast<char>('0' + (9 - dst.row));
 	return tmp;
 }

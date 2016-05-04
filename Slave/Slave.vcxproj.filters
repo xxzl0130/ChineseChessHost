@@ -36,30 +36,6 @@
     <ClInclude Include="StepperMotor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SimpleSDAudio\SimpleSDAudio.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LiquidCrystal_I2C\LiquidCrystal_I2C.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SimpleSDAudio\sd_l0.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SimpleSDAudio\sd_l1.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SimpleSDAudio\sd_l2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SimpleSDAudio\SimpleSDAudioDefs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Wire\src\Wire.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Wire\src\utility\twi.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MatrixKeyboard.cpp">
@@ -69,27 +45,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="StepperMotor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SimpleSDAudio\sd_l0.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SimpleSDAudio\sd_l1.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SimpleSDAudio\sd_l2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SimpleSDAudio\SimpleSDAudio.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="LiquidCrystal_I2C\LiquidCrystal_I2C.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Wire\src\Wire.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Wire\src\utility\twi.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

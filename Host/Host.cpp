@@ -221,7 +221,7 @@ void slave2Engine()
 				string tmp;
 				// 读一整行
 				slave.readline(tmp);
-				if(tmp.find(testComSlave))
+				if(tmp.find(testComSlave) != string::npos)
 				{// 如果是检查连接的
 					// 发回字符串
 					slave.write(testComHost);
