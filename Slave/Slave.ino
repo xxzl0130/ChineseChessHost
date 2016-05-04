@@ -62,11 +62,8 @@ SlipTable table(StepperMotor(6, 7, circleStep), StepperMotor(8, 9, circleStep),
 // 升降台
 StepperMotor upDownMotor(10, 11, circleStep);
 
+// 检测移动棋子
 bool detectMoveChess();
-// 检测拿起棋子
-bool detectPickUpChess();
-// 检测放下棋子
-bool detectPutDownChess();
 // 执行命令
 void executeOrder(String& order);
 // 求和 flag:false 人 true 机
@@ -139,26 +136,8 @@ void setup()
 	initSerial();
 	initSDPlayer();
 	initBoard();
-	// 跳线联通则不进行运动
 	Lcd.setCursor(0, 1);
 	Lcd.print("INIT ALL DONE   ");
-	while(true)
-	{
-		debugSer.println(detectMoveChess());
-		/*rowClear();
-		for (int i = 0;i < RowCnt;++i)
-		{
-			digitalWrite(RowStart + i, LOW);
-			for (int j = 0;j < ColCnt;++j)
-			{
-				debugSer.print(digitalRead(ColStart + j));
-			}
-			debugSer.print('\n');
-			digitalWrite(RowStart + i, HIGH);
-		}
-		debugSer.println("------------------");*/
-		delay(1000);
-	}
 }
 
 void loop()
@@ -182,6 +161,7 @@ bool detectMoveChess()
 		{
 			if(boardState[i][j] != (t = isPress(ColStart + j)))
 			{
+#ifdef DEBUG
 				debugSer.print(i);
 				debugSer.print(',');
 				debugSer.print(j);
@@ -192,6 +172,7 @@ bool detectMoveChess()
 				debugSer.print((int)(lastChangeChess.col));
 				debugSer.print(',');
 				debugSer.println((char)(lastChangeChess.chess));
+#endif
 				boardState[i][j] = t;
 				if(lastChangeChess.row == -1)
 				{// 初始状态
@@ -203,7 +184,9 @@ bool detectMoveChess()
 					return false;
 				}
 				String path = generatePath(lastChangeChess, ChessPoint(i, j, board[lastChangeChess.row][lastChangeChess.col]));
+#ifdef DEBUG
 				debugSer.println(path);
+#endif
 				if(checkPath(path, lastChangeChess.chess))
 				{// 如果变化的是个合法的路径则认为是走子
 					// 修改棋盘
@@ -221,142 +204,6 @@ bool detectMoveChess()
 			}
 		}
 		digitalWrite(RowStart + i, HIGH);
-	}
-	return false;
-}
-
-bool detectPickUpChess()
-{
-	for (int i = 0; i < RowCnt; ++i)
-	{
-		digitalWrite(RowStart + i, HIGH);
-		for (int j = 0; j < ColCnt; ++j)
-		{
-			//if (board[i][j] != b /*该处之前有子*/
-			//	&& digitalRead(ColStart + j) == LOW /*现在此处无子*/
-			//	&& isPress(ColStart + j) /*防抖检测*/)
-			if(isPress(ColStart + j))
-			{
-				if (isUpperCase(AIColorNumber) != isUpperCase(board[i][j]))
-				{
-					// 拿起的子不是电脑的子
-					// 修改游戏状态
-					gameState = PlayerHoldHis;
-					// 记录拿起的是玩家的子
-					if(chessHold[0].chess != b)
-					{// 如果之前记录了拿起棋子，则视为放回
-						board[chessHold[0].row][chessHold[0].col] = chessHold[0].chess;
-					}
-					chessHold[0] = ChessPoint(RowCnt - i - 1, j, board[i][j]);
-					chessHold[0].row = i;
-					chessHold[0].col = j;
-				}
-				else
-				{
-					gameState = PlayerHoldOpp;
-					// 记录拿起的是电脑的子
-					if (chessHold[1].chess != b)
-					{// 如果之前记录了拿起棋子，则视为放回
-						board[chessHold[1].row][chessHold[1].col] = chessHold[1].chess;
-					}
-					chessHold[1] = ChessPoint(RowCnt - i - 1, j, board[i][j]);
-					chessHold[1].row = i;
-					chessHold[1].col = j;
-				}
-				// 该位置修改为无子
-				board[i][j] = b;
-				return true;
-			}
-		}
-		digitalWrite(RowStart + i, LOW);
-	}
-	return false;
-}
-
-bool detectPutDownChess()
-{
-	for (int i = 0; i < RowCnt; ++i)
-	{
-		digitalWrite(RowStart + i, HIGH);
-		for (int j = 0; j < ColCnt; ++j)
-		{
-			//if (board[i][j] == b /*该处之前无子*/
-			//	&& digitalRead(ColStart + j) == HIGH /*现在此处有子*/
-			//	&& isPress(ColStart + j) /*防抖检测*/)
-			if (isPress(ColStart + j))
-			{
-				switch (gameState)
-				{
-				case PlayerHoldHis:
-					if (RowCnt - i - 1 == chessHold[0].row && j == chessHold[0].col)
-					{
-						// 玩家把原来拿起来的子放下了
-						gameState = Play;
-						board[i][j] = chessHold[0].chess;
-					}
-					else
-					{
-						// 玩家落子
-						gameState = MoveDone;
-						board[i][j] = chessHold[0].chess;
-					}
-					break;
-				case PlayerHoldOpp:
-					if (RowCnt - i - 1 == chessHold[1].row && j == chessHold[1].col)
-					{
-						// 玩家把原来拿起来的子放下了
-						gameState = Play;
-						board[i][j] = chessHold[1].chess;
-					}
-					else
-					{
-						// ！！错误行为 需要提示
-						gameState = Play;
-						board[i][j] = chessHold[0].chess;
-					}
-					break;
-				case PlayerHoldTwo:
-					if (RowCnt - i - 1 == chessHold[0].row && j == chessHold[0].col)
-					{
-						// 玩家把原来拿起来的自己子放下了
-						gameState = PlayerHoldOpp;
-						board[i][j] = chessHold[0].chess;
-					}
-					else if (RowCnt - i - 1 == chessHold[1].row && j == chessHold[1].col)
-					{
-						// 玩家吃了子
-						gameState = MoveDone;
-						board[i][j] = chessHold[0].chess;
-					}
-				default:
-					break;
-				}
-
-				if (gameState == MoveDone)
-				{
-					// 计算走法
-					char path[5] = { chessHold[0].col + 'a',chessHold[0].row + '0',
-									'a' + j,'0' + i };
-					if (checkPath(path, chessHold[0].chess))
-					{
-						// 清空持子记录
-						memset(chessHold, 0, sizeof(chessHold));
-						return true;
-					}
-					else
-					{
-						// 需要提示
-						gameState = Play;
-						swap(path[0], path[2]);
-						swap(path[1], path[3]);
-						// 将走错的棋子挪回去
-						moveChess(path);
-						return false;
-					}
-				}
-			}
-		}
-		digitalWrite(RowStart + i, LOW);
 	}
 	return false;
 }
@@ -705,9 +552,6 @@ void playing()
 				gameState = MoveDone;
 			}
 			break;
-		case PlayerHoldHis:case PlayerHoldOpp:case PlayerHoldTwo:
-			detectPutDownChess();
-			break;
 		case MoveDone:
 			// 提示当前为电脑回合
 			Lcd.setCursor(0, 0);
@@ -757,25 +601,6 @@ void playing()
 			}
 		}
 	}
-	/*
-	while(true)
-	{
-		while(true)
-		{
-			if(debugSer.available())
-			{
-				tmp = debugSer.readString();
-				debugSer.println(tmp);
-				break;
-			}
-		}
-		digitalWrite(ledPin, buf[0] ^= 1);
-		modifyBoard(board, tmp);
-		sendBoard(board);
-		tmp = readOrderFromHost();
-		executeOrder(tmp);
-	}
-	*/
 }
 
 void reset()
@@ -807,6 +632,7 @@ void gameOver(GameState state)
 	}
 	Lcd.setCursor(0, 1);
 	Lcd.print("Play again?");
+	playAudio(AgainAudio);
 	while (true)
 	{
 		if(isPress(StartKey,LOW))
@@ -938,8 +764,9 @@ bool initSerial()
 		delay(1000);
 		return false;
 	}
+	// ReSharper disable CppPossiblyErroneousEmptyStatements
 	while (!comSer.available());
-	/*comSer.println(testComSlave);
+	comSer.println(testComSlave);
 	for (uchr i = 0; i < 3; ++i)
 	{
 		tmp = comSer.readString();
@@ -951,7 +778,7 @@ bool initSerial()
 			break;
 		}
 		delay(100);
-	}*/
+	}
 
 #ifdef DEBUG
 	debugSer.begin(generalBaudRate);
@@ -961,7 +788,8 @@ bool initSerial()
 
 void initBoard()
 {
-	//table.reset();
+	// 重置零点
+	table.reset();
 	rowClear();
 	// 读取初始棋盘接触状态
 	for (int i = 0; i < RowCnt; ++i)
@@ -1003,11 +831,13 @@ void initPin()
 	pinMode(jumpPinB, INPUT_PULLUP);
 	digitalWrite(jumpPinA, LOW);
 	digitalWrite(MagnetUp, LOW);
+	// 横排输出 默认高
 	for (char i = 0; i < RowCnt; ++i)
 	{
 		pinMode(RowStart + i, OUTPUT);
 		digitalWrite(RowStart + i, HIGH);
 	}
+	// 纵列上拉输入
 	for (char i = 0; i < ColCnt; ++i)
 	{
 		pinMode(ColStart + i, INPUT_PULLUP);
@@ -1019,14 +849,12 @@ void initSDPlayer()
 	Lcd.setCursor(0, 1);
 	Lcd.print("  SDCARD INIT  ");
 	//SdPlay.setWorkBuffer(static_cast<uint8_t*>(static_cast<void*>(buf)), MAX_BUF_SIZE);
-	SdPlay.setSDCSPin(53);
-	if(!SdPlay.init(SSDA_MODE_FULLRATE | SSDA_MODE_STEREO | SSDA_MODE_AUTOWORKER))
+	SdPlay.setSDCSPin(CS_PIN);
+	if(!SdPlay.init(AudioMode))
 	{
 		comSer.print(F("initialization failed:"));
 		comSer.println(SdPlay.getLastError());
 	}
-	Lcd.setCursor(0, 1);
-	Lcd.print("  SDCARD OK  ");
 }
 
 void moveChess(String order)
@@ -1061,12 +889,13 @@ void moveChess(String order)
 void playAudio(char Filename[])
 {
 	// 设置文件
-	//SdPlay.setFile(Filename);
 	if (!SdPlay.setFile(Filename))
 	{
+#ifdef DEBUG
 		debugSer.print(Filename);
 		debugSer.println(F(" not found on card! Error code: "));
 		debugSer.println(SdPlay.getLastError());
+#endif
 	}
 	SdPlay.worker();
 	SdPlay.play();

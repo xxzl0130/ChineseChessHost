@@ -4,7 +4,7 @@
 #include "CommonDef.h"
 
 // 缓冲区最大大小(1024B)
-#define MAX_BUF_SIZE (1024u)
+#define MAX_BUF_SIZE (2048L)
 
 // LED针脚
 #define ledPin 13
@@ -41,7 +41,7 @@
 // 右声道
 #define RightAudio	45
 // 音频模式 全速率&双声道
-#define AudioMode	(SSDA_MODE_FULLRATE | SSDA_MODE_STEREO)
+#define AudioMode	(SSDA_MODE_FULLRATE | SSDA_MODE_STEREO | SSDA_MODE_AUTOWORKER)
 
 // 屏蔽跳线
 #define jumpPinA		42
@@ -168,6 +168,10 @@ public:
 #define DisconnectAudio	"dis.afs"
 // 重新连接
 #define ReconnectAudio	"rec.afs"
+// 电脑提和
+#define AIDrawAudio		"aid.afs"
+// 再来一局？
+#define AgainAudio		"aga.afs"
 
 template<typename T>
 void swap(T &a,T &b)
