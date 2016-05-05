@@ -16,13 +16,13 @@ Point<double> SlipTable::getPos() const
 
 void SlipTable::reset()
 {
-	while (digitalRead(xSwitch) == HIGH)
-	{// 接触限位开关后信号为low 停止
-		xAxis.run(FORWORD, 1);
-	}
 	while (digitalRead(ySwitch) == HIGH)
 	{// 接触限位开关后信号为low 停止
 		yAxis.run(FORWORD, 1);
+	}
+	while (digitalRead(xSwitch) == HIGH)
+	{// 接触限位开关后信号为low 停止
+		xAxis.run(FORWORD, 1);
 	}
 	pos.x = xLength;
 	pos.y = yLength;

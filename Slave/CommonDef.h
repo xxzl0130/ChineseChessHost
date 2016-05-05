@@ -18,9 +18,10 @@
 #endif
 
 // 主机向从机发送的测试字符串
-#define testComHost "Hello slave"
+#define testComHost		"Hello slave"
 // 从机向主机回复的测试字符串
-#define testComSlave "Hello host"
+#define testComSlave	"Hello host"
+#define InfoString		"info:"
 // 串口比特率
 #define generalBaudRate 9600UL
 

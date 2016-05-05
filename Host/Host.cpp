@@ -204,7 +204,7 @@ bool readOrderFromEngine(char* buf, size_t size)
 			// 找到bestmove后退出
 			return true;
 		}
-		Sleep(500);
+		Sleep(100);
 	}
 	return false;
 }
@@ -233,8 +233,11 @@ void slave2Engine()
 						// 保证有换行
 						tmp += "\n";
 					}
-					// 发送至引擎
-					send2Engine(tmp);
+					if(tmp.find(InfoString) == string::npos)
+					{// 不是显示信息
+						// 发送至引擎
+						send2Engine(tmp);
+					}
 					// 检查是否退出
 					if (tmp.find("quit") != string::npos)
 					{
@@ -257,7 +260,7 @@ void slave2Engine()
 			cerr << "Unhandled Exception: " << err.what() << endl;
 			exit(1);
 		}
-		Sleep(200);
+		Sleep(100);
 	}
 }
 
@@ -280,7 +283,7 @@ void engine2Slave()
 			system("pause");
 			exit(1);
 		}
-		Sleep(200);
+		Sleep(100);
 	}
 }
 

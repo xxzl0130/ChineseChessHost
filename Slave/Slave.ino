@@ -11,6 +11,9 @@ Todo:
 test
 */
 
+#define enableAudio 1
+#define enableHit	1
+
 //LCD1602
 LiquidCrystal_I2C Lcd(0x27, 16, 2);
 
@@ -121,7 +124,7 @@ void pickUpChess();
 // 放下棋子
 void putDownChess();
 // 检查走子合法性
-bool checkPath(String path, Chess chess);
+bool checkPath(String path, Chess board[BoardRow][BoardCol]);
 // 重新连接
 void reconnect();
 // 棋盘行引脚清零
@@ -133,8 +136,9 @@ void setup()
 {
 	initLCD();
 	initPin();
-	initSerial();
 	initSDPlayer();
+	playAudio(InitAudio);
+	initSerial();
 	initBoard();
 	Lcd.setCursor(0, 1);
 	Lcd.print("INIT ALL DONE   ");
@@ -155,23 +159,25 @@ bool detectMoveChess()
 	rowClear();
 	for (int i = 0;i < RowCnt;++i)
 	{
-		// 拉高一行
+		// 拉低一行
 		digitalWrite(RowStart + i, LOW);
 		for (int j = 0;j < ColCnt;++j)
 		{
-			if(boardState[i][j] != (t = isPress(ColStart + j)))
+			if(boardState[i][j] != (t = isPress(ColStart + j, LOW)))
 			{
 #ifdef DEBUG
-				debugSer.print(i);
-				debugSer.print(',');
-				debugSer.print(j);
-				debugSer.print(',');
-				debugSer.println((char)(board[i][j]));
-				debugSer.print((int)(lastChangeChess.row));
-				debugSer.print(',');
-				debugSer.print((int)(lastChangeChess.col));
-				debugSer.print(',');
-				debugSer.println((char)(lastChangeChess.chess));
+				comSer.print("[info] ");
+				comSer.print(i);
+				comSer.print(',');
+				comSer.print(j);
+				comSer.print(",");
+				comSer.print((char)(board[i][j]));
+				comSer.print(" | ");
+				comSer.print((int)(lastChangeChess.row));
+				comSer.print(',');
+				comSer.print((int)(lastChangeChess.col));
+				comSer.print(',');
+				comSer.println((char)(lastChangeChess.chess));
 #endif
 				boardState[i][j] = t;
 				if(lastChangeChess.row == -1)
@@ -185,20 +191,31 @@ bool detectMoveChess()
 				}
 				String path = generatePath(lastChangeChess, ChessPoint(i, j, board[lastChangeChess.row][lastChangeChess.col]));
 #ifdef DEBUG
-				debugSer.println(path);
+				comSer.print("[info]");
+				comSer.print(path);
+				comSer.print(" ");
+				comSer.println((char)(lastChangeChess.chess));
 #endif
-				if(checkPath(path, lastChangeChess.chess))
+				if(checkPath(path, board))
 				{// 如果变化的是个合法的路径则认为是走子
 					// 修改棋盘
 					modifyBoard(board, path);
 					// 重置为初始状态
 					lastChangeChess = ChessPoint(-1, -1, b);
+#ifdef DEBUG
+					comSer.print("[info]");
+					comSer.println("path available");
+#endif
 					return true;
 				}
 				else
 				{
 					// 记录变化棋子
 					lastChangeChess = ChessPoint(i, j, board[i][j]);
+#ifdef DEBUG
+					comSer.print("[info]");
+					comSer.println("path inavailable");
+#endif
 					return false;
 				}
 			}
@@ -241,10 +258,12 @@ void executeOrder(String& order)
 	{
 		move[i] = ptr[i];
 	}
+#ifdef DEBUG
+	comSer.print("[info]");
+	comSer.println(move);
+#endif
 	// 走子
 	moveChess(move);
-	// 归位以避免影响视线
-	//moveChess("a9a9");
 	table.move(xAxisStart, yAxisStart);
 }
 
@@ -329,7 +348,6 @@ bool resign(bool flag)
 
 void waitStart()
 {
-	debugSer.println("waitStart");
 	Lcd.clear();
 	Lcd.setCursor(0, 0);
 	Lcd.print(" Chinese Chess");
@@ -512,7 +530,6 @@ void start()
 	Lcd.print("  GAME START!  ");
 	Lcd.setCursor(0, 1);
 	Lcd.print(" DRAW   RESIGN ");
-	delay(5000);
 }
 
 void playing()
@@ -521,6 +538,7 @@ void playing()
 	static bool waitTimeFlag1, waitTimeFlag2,hitFlag = true;
 	while (true)
 	{
+#if enableHit
 		if(millis() - hitTime > 5000)
 		{// 5s检查一次连接
 			if(hitFlag == true)
@@ -531,8 +549,10 @@ void playing()
 			else
 			{
 				reconnect();
+				hitFlag = true;
 			}
 		}
+#endif
 		// 求和
 		if (isPress(StartKey, LOW))
 		{
@@ -550,12 +570,13 @@ void playing()
 			if (detectMoveChess())
 			{
 				gameState = MoveDone;
+#ifdef DEBUG
+				comSer.print("[info]");
+				comSer.println("MoveDone");
+#endif
 			}
 			break;
 		case MoveDone:
-			// 提示当前为电脑回合
-			Lcd.setCursor(0, 0);
-			Lcd.print(" COMPUTER TURN  ");
 			sendBoard(board);
 			gameState = WaitOrder;
 			waitTime = millis();
@@ -563,6 +584,9 @@ void playing()
 			waitTimeFlag1 = waitTimeFlag2 = false;
 			break;
 		case WaitOrder:
+			// 提示当前为电脑回合
+			Lcd.setCursor(0, 0);
+			Lcd.print(" COMPUTER TURN  ");
 			// 如果主机发来了指令
 			if (comSer.available())
 			{
@@ -590,6 +614,7 @@ void playing()
 		default:
 			break;
 		}
+#if enableHit
 		// 如果主机发来了连接测试回复
 		if (comSer.available())
 		{
@@ -597,9 +622,9 @@ void playing()
 			if (strstr(tmp.c_str(), testComHost) != NULL)
 			{ // 找到应有字符串，表示连接成功
 				hitFlag = true;
-				break;
 			}
 		}
+#endif
 	}
 }
 
@@ -709,8 +734,16 @@ String readOrderFromHost()
 			{ // 找到bestmove
 				return tmp;
 			}
+#ifdef DEBUG
+			comSer.print("[info]");
+			comSer.println(tmp);
+#endif
 		}
 		delay(100);
+#ifdef DEBUG
+		comSer.print("[info]");
+		comSer.println(comSer.available());
+#endif
 	}
 }
 
@@ -764,9 +797,9 @@ bool initSerial()
 		delay(1000);
 		return false;
 	}
+	comSer.println(testComSlave);
 	// ReSharper disable CppPossiblyErroneousEmptyStatements
 	while (!comSer.available());
-	comSer.println(testComSlave);
 	for (uchr i = 0; i < 3; ++i)
 	{
 		tmp = comSer.readString();
@@ -788,6 +821,8 @@ bool initSerial()
 
 void initBoard()
 {
+	Lcd.setCursor(0, 1);
+	Lcd.print("  BOARD INIT   ");
 	// 重置零点
 	table.reset();
 	rowClear();
@@ -864,6 +899,17 @@ void moveChess(String order)
 	scr = getChessPos(order[0], order[1]);
 	// 目标坐标
 	dst = getChessPos(order[2], order[3]);
+#ifdef DEBUG
+	comSer.print("[info](");
+	comSer.print(scr.x);
+	comSer.print(",");
+	comSer.print(scr.y);
+	comSer.print(")  (");
+	comSer.print(dst.x);
+	comSer.print(",");
+	comSer.print(dst.y);
+	comSer.print(") \n");
+#endif
 	if (order[0] == order[2] && order[1] == order[3])
 	{
 		table.move(dst);
@@ -888,13 +934,14 @@ void moveChess(String order)
 
 void playAudio(char Filename[])
 {
+#if enableAudio
 	// 设置文件
 	if (!SdPlay.setFile(Filename))
 	{
 #ifdef DEBUG
-		debugSer.print(Filename);
-		debugSer.println(F(" not found on card! Error code: "));
-		debugSer.println(SdPlay.getLastError());
+		comSer.print(Filename);
+		comSer.println(F(" not found on card! Error code: "));
+		comSer.println(SdPlay.getLastError());
 #endif
 	}
 	SdPlay.worker();
@@ -903,6 +950,7 @@ void playAudio(char Filename[])
 	{
 		SdPlay.worker();
 	}
+#endif
 }
 
 Point<double> getAvailableRecycleBin()
@@ -914,8 +962,8 @@ Point<double> getAvailableRecycleBin()
 		if (list[i] < 2)
 		{
 			++list[i];
-			bin.y = boxWidth * (i + 2);
-			bin.x = boardLength + boxWidth * 2;
+			bin.y = boxWidth * i;
+			bin.x = xAxisLength + boxWidth * 2;
 		}
 	}
 	return bin;
@@ -926,13 +974,8 @@ Point<double> getChessPos(char col, char row)
 {
 	Point<double> pos(xAxisStart, yAxisStart);
 	int _col = col - 'a', _row = 9 - (row - '0');
-	pos.x += _col * boxWidth;
-	pos.y += _row * boxLength;
-	if(_row > 4)
-	{
-		// 楚河另一侧 加上楚河宽度
-		pos.y += riverWidth - boxLength;
-	}
+	pos.y += _col * boxWidth;
+	pos.x += _row * boxLength;
 	return pos;
 }
 
@@ -947,8 +990,8 @@ void pickUpChess()
 	// 落下滑台
 	upDownMotor.run(BACKWORD, zAxisStep,500);
 	// 电磁铁正向通电
-	digitalWrite(MagnetUp, HIGH);
-	digitalWrite(MagnetDown, LOW);
+	digitalWrite(MagnetUp, LOW);
+	digitalWrite(MagnetDown, HIGH);
 	delay(200);
 	// 升起滑台
 	upDownMotor.run(FORWORD, zAxisStep,500);
@@ -959,23 +1002,32 @@ void putDownChess()
 	// 落下滑台
 	upDownMotor.run(BACKWORD, zAxisStep, 500);
 	// 电磁铁反向通电
-	digitalWrite(MagnetDown, HIGH);
-	digitalWrite(MagnetUp, LOW);
+	digitalWrite(MagnetDown, LOW);
+	digitalWrite(MagnetUp, HIGH);
 	delay(100);
 	// 升起滑台
 	upDownMotor.run(FORWORD, zAxisStep, 500);
+	// 断开电池铁
+	digitalWrite(MagnetDown, LOW);
+	digitalWrite(MagnetUp, LOW);
 }
 
-bool checkPath(String path, Chess chess)
+bool checkPath(String path, Chess board[BoardRow][BoardCol])
 {
 	int x, y;
-	switch(chess)
+	if(board[9 - (path[3] - '0')][path[2] - 'a'] != b && //目标处有子
+		isupper(board[9 - (path[1] - '0')][path[0] - 'a']) == 
+		isupper(board[9 - (path[3] - '0')][path[2] - 'a'])) // 是同一方的子
+	{
+		return false;
+	}
+	switch (board[9 - (path[1]  - '0')][path[0] - 'a'])
 	{
 	case k:case K:case a:case A://
-		// 将/帅/仕/士限制相同
-		if ((path[2] == 'd' && path[2] == 'e' && path[2] == 'f') && // 纵向
-			(path[3] >= '7' && path[3] <= '9') || // 横向
-			(path[3] >= '0' && path[3] <= '2'))   // 限制在田字格
+								// 将/帅/仕/士限制相同
+		if ((path[2] == 'd' || path[2] == 'e' || path[2] == 'f') && // 纵向
+			((path[3] >= '7' && path[3] <= '0') || // 横向
+			(path[3] >= '0' && path[3] <= '2')))   // 限制在田字格
 			return true;
 		else
 		{
@@ -984,11 +1036,11 @@ bool checkPath(String path, Chess chess)
 	case e:case E:
 		x = path[2] - path[0];
 		y = path[3] - path[1];
-		if(abs(x) != 2 || abs(y) != 2)
+		if (abs(x) != 2 || abs(y) != 2)
 		{// 检测田字
 			return false;
 		}
-		if(board[path[1] - '9' + (y /2)][path[0] - 'a' + (x / 2)] != b)
+		if (board[9 - (path[1] - '0' + (y / 2))][path[0] - 'a' + (x / 2)] != b)
 		{// 检测象眼
 			return false;
 		}
@@ -999,14 +1051,15 @@ bool checkPath(String path, Chess chess)
 	case h:case H:
 		x = path[2] - path[0];
 		y = path[3] - path[1];
-		if(abs(x) > abs(y))
+		if (abs(x) > abs(y))
 		{
-			if(abs(x) != 2 || abs(y) != 1)
+			if (abs(x) != 2 || abs(y) != 1)
 			{// 检测日字
 				return false;
 			}
-			if (board[path[1] - '9'][path[0] - 'a' + (x / 2)] != b)
+			if (board[9 - (path[1] - '0')][path[0] - 'a' + (x / 2)] != b)
 			{// 检测马脚
+				
 				return false;
 			}
 			return true;
@@ -1015,34 +1068,36 @@ bool checkPath(String path, Chess chess)
 		{
 			if (abs(x) != 1 || abs(y) != 2)
 			{// 检测日字
+				
 				return false;
 			}
-			if (board[path[1] - '9' + (y / 2)][path[0] - 'a'] != b)
+			if (board[9 - (path[1] - '0' + (y / 2))][path[0] - 'a'] != b)
 			{// 检测马脚
 				return false;
 			}
 			return true;
 		}
 	case r:case R:
-		if(path[2] == path[0])
+		if (path[2] == path[0])
 		{// 竖着走
 			int i = min(path[3], path[1]), j = max(path[1], path[3]);
-			for (; i < j;++i)
+			for (++i; i < j;++i)
 			{
-				if (board[i - '9'][path[0] - 'a'] != b)
+				if (board[9 - (i - '0')][path[0] - 'a'] != b)
 				{// 检查一路上有没有子
 					return false;
 				}
 			}
 			return true;
 		}
-		else if(path[3] == path[1])
+		else if (path[3] == path[1])
 		{// 横着走
 			int i = min(path[0], path[2]), j = max(path[0], path[2]);
-			for (; i < j; ++i)
+			for (++i; i < j; ++i)
 			{
-				if (board[path[1] - '9'][j - 'a'] != b)
+				if (board[9 - (path[1] - '0')][j - 'a'] != b)
 				{// 检查一路上有没有子
+					
 					return false;
 				}
 			}
@@ -1055,10 +1110,10 @@ bool checkPath(String path, Chess chess)
 	case c:case C:
 		if (path[2] == path[0])
 		{// 竖着走
-			int i = min(path[3], path[1]), j = max(path[1], path[3]),count = 0;
-			for (; i <= j; ++i)
+			int i = min(path[3], path[1]), j = max(path[1], path[3]), count = 0;
+			for (++i; i <= j; ++i)
 			{
-				if (board[i - '9'][path[0] - 'a'] != b)
+				if (board[9 - (i - '0')][path[0] - 'a'] != b)
 				{// 检查一路上有几个子
 					++count;
 				}
@@ -1069,9 +1124,9 @@ bool checkPath(String path, Chess chess)
 		else if (path[3] == path[1])
 		{// 横着走
 			int i = min(path[0], path[2]), j = max(path[0], path[2]), count = 0;
-			for (; i <= j; ++i)
+			for (++i; i <= j; ++i)
 			{
-				if (board[path[1] - '9'][j - 'a'] != b)
+				if (board[9 - (path[1] - '0')][j - 'a'] != b)
 				{// 检查一路上有多少子
 					++count;
 				}
@@ -1084,9 +1139,9 @@ bool checkPath(String path, Chess chess)
 			return false;
 		}
 	case p:
-		if(path[1] >= '5')
+		if (path[1] >= '5')
 		{// 还没过河
-			if(path[2] == path[0] && path[3] == path[1] - 1)
+			if (path[2] == path[0] && path[3] == path[1] - 1)
 			{
 				// 只能前进
 				return true;
@@ -1100,7 +1155,7 @@ bool checkPath(String path, Chess chess)
 		{// 过河可以随便走了
 			x = path[2] - path[0];
 			y = path[3] - path[1];
-			if(max(abs(x),abs(y)) >= 1)
+			if (max(abs(x), abs(y)) >= 1)
 			{
 				//　只能走一格
 				return false;

@@ -4,7 +4,7 @@
 #include "CommonDef.h"
 
 // 缓冲区最大大小(1024B)
-#define MAX_BUF_SIZE (2048L)
+#define MAX_BUF_SIZE (1024L)
 
 // LED针脚
 #define ledPin 13
@@ -133,11 +133,13 @@ public:
 // z轴步数
 #define zAxisStep		1024UL
 // x轴长度
-#define xAxisLength		260
+#define xAxisLength		283
 // y轴长度
-#define yAxisLength		260
+#define yAxisLength		215
 
 // 各种音频文件名
+// 初始化
+#define InitAudio		"ini.afs"
 // 将军
 #define CheckmateAudio	"che.afs"
 // 选择难度
@@ -146,6 +148,10 @@ public:
 #define LoseAudio		"win.afs"
 // 选择顺序
 #define OrderAudio		"ord.afs"
+// 先手
+#define FirstAudio		"fir.afs"
+// 后手
+#define SecondAudio		"sec.afs"
 // 欢迎
 #define WelcomeAudio	"wel.afs"
 // 玩家输
