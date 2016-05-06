@@ -110,6 +110,11 @@ public:
 		s[3] = static_cast<char>(p.row) + '0';
 		return s;
 	}
+	
+	bool operator =(const ChessPoint &t)const
+	{
+		return row == t.row && col == t.col && chess == t.chess;
+	}
 };
 
 // Ï¸·Ö²½Êý

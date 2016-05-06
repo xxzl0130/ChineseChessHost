@@ -78,7 +78,7 @@ void SlipTable::move(double x, double y)
 		// 速度快时近似为两轴同步运动
 		xAxis.OneStep();
 		--xAxisToGo;
-		delayMicroseconds(50);
+		//delayMicroseconds(50);
 		yAxis.OneStep();
 		--yAxisToGo;
 		delayMicroseconds(50);

@@ -6,13 +6,14 @@
 #include "StepperMotor.h"
 #include "SlipTable.h"
 #include "SimpleSDAudio/SimpleSDAudio.h"
+#include "Queue/Queue.h"
 /*
 Todo:
 test
 */
 
-#define enableAudio 1
-#define enableHit	1
+#define enableAudio 0
+#define enableHit	0
 
 //LCD1602
 LiquidCrystal_I2C Lcd(0x27, 16, 2);
@@ -138,6 +139,7 @@ void setup()
 	initPin();
 	initSDPlayer();
 	playAudio(InitAudio);
+	//table.reset();
 	initSerial();
 	initBoard();
 	Lcd.setCursor(0, 1);
@@ -156,6 +158,7 @@ bool detectMoveChess()
 {
 	static ChessPoint lastChangeChess(-1, -1, b);
 	static bool t;
+	static CircleQueue<ChessPoint> que(8);
 	rowClear();
 	for (int i = 0;i < RowCnt;++i)
 	{
@@ -163,60 +166,63 @@ bool detectMoveChess()
 		digitalWrite(RowStart + i, LOW);
 		for (int j = 0;j < ColCnt;++j)
 		{
-			if(boardState[i][j] != (t = isPress(ColStart + j, LOW)))
+			if (boardState[i][j] != digitalRead(ColStart + j))
 			{
-#ifdef DEBUG
-				comSer.print("[info] ");
-				comSer.print(i);
-				comSer.print(',');
-				comSer.print(j);
-				comSer.print(",");
-				comSer.print((char)(board[i][j]));
-				comSer.print(" | ");
-				comSer.print((int)(lastChangeChess.row));
-				comSer.print(',');
-				comSer.print((int)(lastChangeChess.col));
-				comSer.print(',');
-				comSer.println((char)(lastChangeChess.chess));
-#endif
-				boardState[i][j] = t;
-				if(lastChangeChess.row == -1)
-				{// 初始状态
-					lastChangeChess = ChessPoint(i, j, board[i][j]);
-					return false;
-				}
-				if(i == lastChangeChess.row && j == lastChangeChess.col)
-				{// 这个子是之前按下的子
-					return false;
-				}
-				String path = generatePath(lastChangeChess, ChessPoint(i, j, board[lastChangeChess.row][lastChangeChess.col]));
-#ifdef DEBUG
-				comSer.print("[info]");
-				comSer.print(path);
-				comSer.print(" ");
-				comSer.println((char)(lastChangeChess.chess));
-#endif
-				if(checkPath(path, board))
-				{// 如果变化的是个合法的路径则认为是走子
-					// 修改棋盘
-					modifyBoard(board, path);
-					// 重置为初始状态
-					lastChangeChess = ChessPoint(-1, -1, b);
-#ifdef DEBUG
-					comSer.print("[info]");
-					comSer.println("path available");
-#endif
-					return true;
-				}
-				else
+				delay(100);
+				if (boardState[i][j] != (t = digitalRead(ColStart + j)))
 				{
-					// 记录变化棋子
-					lastChangeChess = ChessPoint(i, j, board[i][j]);
+					boardState[i][j] = t;
+					if (lastChangeChess.row == -1)
+					{// 初始状态
+						lastChangeChess = ChessPoint(i, j, board[i][j]);
+						return false;
+					}
+					if (i == lastChangeChess.row && j == lastChangeChess.col)
+					{// 这个子是之前按下的子
+						//return false;
+						continue;
+					}
+					String path = generatePath(lastChangeChess, ChessPoint(i, j, board[lastChangeChess.row][lastChangeChess.col]));
 #ifdef DEBUG
+					comSer.print("[info] ");
+					comSer.print(i);
+					comSer.print(',');
+					comSer.print(j);
+					comSer.print(",");
+					comSer.print((char)(board[i][j]));
+					comSer.print(" | ");
+					comSer.print((int)(lastChangeChess.row));
+					comSer.print(',');
+					comSer.print((int)(lastChangeChess.col));
+					comSer.print(',');
+					comSer.println((char)(lastChangeChess.chess));
 					comSer.print("[info]");
-					comSer.println("path inavailable");
+					comSer.print(path);
+					comSer.print(" ");
+					comSer.println((char)(lastChangeChess.chess));
 #endif
-					return false;
+					if (checkPath(path, board))
+					{// 如果变化的是个合法的路径则认为是走子
+						// 修改棋盘
+						modifyBoard(board, path);
+						// 重置为初始状态
+						lastChangeChess = ChessPoint(-1, -1, b);
+#ifdef DEBUG
+						comSer.print("[info]");
+						comSer.println("path available");
+#endif
+						return true;
+					}
+					else
+					{
+						// 记录变化棋子
+						lastChangeChess = ChessPoint(i, j, board[i][j]);
+#ifdef DEBUG
+						comSer.print("[info]");
+						comSer.println("path inavailable");
+#endif
+						return false;
+					}
 				}
 			}
 		}
@@ -530,6 +536,7 @@ void start()
 	Lcd.print("  GAME START!  ");
 	Lcd.setCursor(0, 1);
 	Lcd.print(" DRAW   RESIGN ");
+	gameState = Play;
 }
 
 void playing()
@@ -587,6 +594,16 @@ void playing()
 			// 提示当前为电脑回合
 			Lcd.setCursor(0, 0);
 			Lcd.print(" COMPUTER TURN  ");
+			if (millis() - waitTime > 5000 && !waitTimeFlag1)
+			{// 等待5s
+				playAudio(WaitLongAudio1);
+				waitTimeFlag1 = true;
+			}
+			if (millis() - waitTime > 30000 && !waitTimeFlag2)
+			{
+				playAudio(WaitLongAudio2);
+				waitTimeFlag2 = true;
+			}
 			// 如果主机发来了指令
 			if (comSer.available())
 			{
@@ -596,16 +613,6 @@ void playing()
 				// 提示当前为玩家回合
 				Lcd.setCursor(0, 0);
 				Lcd.print("     YOUR TURN  ");
-			}
-			if(millis() - waitTime > 5000 && !waitTimeFlag1)
-			{// 等待5s
-				playAudio(WaitLongAudio1);
-				waitTimeFlag1 = true;
-			}
-			if(millis() - waitTime > 30000 && !waitTimeFlag2)
-			{
-				playAudio(WaitLongAudio2);
-				waitTimeFlag2 = true;
 			}
 			break;
 		case Win:case Lose:case Draw:case Resign:
@@ -630,6 +637,7 @@ void playing()
 
 void reset()
 {
+	initBoard();
 }
 
 void gameOver(GameState state)
@@ -824,7 +832,6 @@ void initBoard()
 	Lcd.setCursor(0, 1);
 	Lcd.print("  BOARD INIT   ");
 	// 重置零点
-	table.reset();
 	rowClear();
 	// 读取初始棋盘接触状态
 	for (int i = 0; i < RowCnt; ++i)
@@ -899,17 +906,6 @@ void moveChess(String order)
 	scr = getChessPos(order[0], order[1]);
 	// 目标坐标
 	dst = getChessPos(order[2], order[3]);
-#ifdef DEBUG
-	comSer.print("[info](");
-	comSer.print(scr.x);
-	comSer.print(",");
-	comSer.print(scr.y);
-	comSer.print(")  (");
-	comSer.print(dst.x);
-	comSer.print(",");
-	comSer.print(dst.y);
-	comSer.print(") \n");
-#endif
 	if (order[0] == order[2] && order[1] == order[3])
 	{
 		table.move(dst);
