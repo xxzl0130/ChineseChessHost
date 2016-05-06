@@ -182,7 +182,7 @@ bool detectMoveChess()
 						//return false;
 						continue;
 					}
-					String path = generatePath(lastChangeChess, ChessPoint(i, j, board[lastChangeChess.row][lastChangeChess.col]));
+					//String path = generatePath(lastChangeChess, ChessPoint(i, j, board[lastChangeChess.row][lastChangeChess.col]));
 #ifdef DEBUG
 					comSer.print("[info] ");
 					comSer.print(i);
@@ -190,39 +190,31 @@ bool detectMoveChess()
 					comSer.print(j);
 					comSer.print(",");
 					comSer.print((char)(board[i][j]));
-					comSer.print(" | ");
-					comSer.print((int)(lastChangeChess.row));
-					comSer.print(',');
-					comSer.print((int)(lastChangeChess.col));
-					comSer.print(',');
-					comSer.println((char)(lastChangeChess.chess));
-					comSer.print("[info]");
-					comSer.print(path);
-					comSer.print(" ");
-					comSer.println((char)(lastChangeChess.chess));
 #endif
-					if (checkPath(path, board))
-					{// 如果变化的是个合法的路径则认为是走子
-						// 修改棋盘
-						modifyBoard(board, path);
-						// 重置为初始状态
-						lastChangeChess = ChessPoint(-1, -1, b);
-#ifdef DEBUG
-						comSer.print("[info]");
-						comSer.println("path available");
-#endif
-						return true;
-					}
-					else
+					for (int i = 0;i < que.size();++i)
 					{
-						// 记录变化棋子
-						lastChangeChess = ChessPoint(i, j, board[i][j]);
+						String path = generatePath(que[i], ChessPoint(i, j, board[que[i].row][que[i].col]));
+						if (checkPath(path, board))
+						{// 如果变化的是个合法的路径则认为是走子
+							// 修改棋盘
+							modifyBoard(board, path);
+							// 重置为初始状态
+							lastChangeChess = ChessPoint(-1, -1, b);
 #ifdef DEBUG
-						comSer.print("[info]");
-						comSer.println("path inavailable");
+							comSer.print("[info]");
+							comSer.print(path);
+							comSer.println("path available");
 #endif
-						return false;
+							return true;
+						}
 					}
+					// 记录变化棋子
+					que.push(ChessPoint(i, j, board[i][j]));
+#ifdef DEBUG
+					comSer.print("[info]");
+					comSer.println("path inavailable");
+#endif
+					return false;
 				}
 			}
 		}
