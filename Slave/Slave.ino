@@ -642,7 +642,14 @@ void playing()
 		}
 #endif
 	}*/
-	while (true)
+	char path[5][5] = {
+		"b2e2",
+		"b0c2",
+		"a0b0",
+		"b0b6",
+		"i0h0"
+	};
+	for (int i = 0;i < 5;++i)
 	{
 		while (true)
 		{
@@ -653,8 +660,7 @@ void playing()
 				break;
 			}
 		}
-		digitalWrite(ledPin, buf[0] ^= 1);
-		modifyBoard(board, tmp);
+		modifyBoard(board, path[i]);
 		sendBoard(board);
 		tmp = readOrderFromHost();
 		executeOrder(tmp);

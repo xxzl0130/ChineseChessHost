@@ -366,5 +366,5 @@ void setEngineOption()
 	// 风格
 	send2Engine("setoption style normal\n");
 	// 随机性
-	send2Engine("setoption randomness small\n");
+	send2Engine("setoption randomness medium\n");
 }
