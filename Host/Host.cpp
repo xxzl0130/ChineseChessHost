@@ -1,8 +1,6 @@
 #include <string>
 #include <iostream>
-#include <cstdio>
 #include <windows.h>
-#include <cstring>
 #include <thread>
 #include <vector>
 
@@ -30,7 +28,7 @@ inline void send2Engine(const char *msg);
 
 int main(int argc, char** argv)
 {
-	system("title 全自动象棋对弈平台 主机端 V1.0");
+	system("title 全自动象棋对弈平台 主机端 V2.0");
 	vector<thread> th;
 	hScreen = GetStdHandle(STD_OUTPUT_HANDLE);
 	// 分多线程初始化
