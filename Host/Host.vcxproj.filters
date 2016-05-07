@@ -30,5 +30,8 @@
     <ClInclude Include="MySerial.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="HostDef.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

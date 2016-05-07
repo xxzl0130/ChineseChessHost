@@ -44,6 +44,11 @@ void slave2Engine();
 */
 void engine2Slave();
 /*
+从屏幕到从机的转发程序。
+独立线程后台运行。
+*/
+void screen2Slave();
+/*
 工作函数
 */
 void work();

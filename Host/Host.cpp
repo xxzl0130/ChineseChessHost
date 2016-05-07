@@ -287,12 +287,36 @@ void engine2Slave()
 	}
 }
 
+void screen2Slave()
+{
+	while (true)
+	{
+		try
+		{
+			// 从屏幕读入信息
+			string tmp;
+			cin >> tmp;
+			tmp += '\n';
+			// 向从机发送信息
+			slave.write(tmp);
+		}
+		catch (exception& err)
+		{
+			cerr << "Unhandled Exception: " << err.what() << endl;
+			system("pause");
+			exit(1);
+		}
+		Sleep(100);
+	}
+}
+
 void work()
 {
 	vector<thread> th;
 	th.push_back(thread(slave2Engine));
 	th.push_back(thread(engine2Slave));
-	// 两个线程在后台转发数据
+	th.push_back(thread(screen2Slave));
+	// 三个线程在后台转发数据
 	for (auto it = th.begin(); it != th.end(); ++it)
 	{
 		it->detach();

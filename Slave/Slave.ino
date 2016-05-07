@@ -12,7 +12,7 @@ Todo:
 test
 */
 
-#define enableAudio 0
+#define enableAudio 1
 #define enableHit	0
 
 //LCD1602
@@ -139,7 +139,7 @@ void setup()
 	initPin();
 	initSDPlayer();
 	playAudio(InitAudio);
-	//table.reset();
+	table.reset();
 	initSerial();
 	initBoard();
 	Lcd.setCursor(0, 1);
@@ -166,13 +166,13 @@ bool detectMoveChess()
 		digitalWrite(RowStart + i, LOW);
 		for (int j = 0;j < ColCnt;++j)
 		{
-			if (boardState[i][j] != digitalRead(ColStart + j))
+			if (boardState[i][j] != digitalRead(ColStart + j) && isupper(board[i][j]))
 			{
-				delay(100);
+				delay(200);
 				if (boardState[i][j] != (t = digitalRead(ColStart + j)))
 				{
 					boardState[i][j] = t;
-					if (lastChangeChess.row == -1)
+					/*if (lastChangeChess.row == -1)
 					{// 初始状态
 						lastChangeChess = ChessPoint(i, j, board[i][j]);
 						return false;
@@ -181,7 +181,7 @@ bool detectMoveChess()
 					{// 这个子是之前按下的子
 						//return false;
 						continue;
-					}
+					}*/
 					//String path = generatePath(lastChangeChess, ChessPoint(i, j, board[lastChangeChess.row][lastChangeChess.col]));
 #ifdef DEBUG
 					comSer.print("[info] ");
@@ -190,23 +190,40 @@ bool detectMoveChess()
 					comSer.print(j);
 					comSer.print(",");
 					comSer.print((char)(board[i][j]));
+					comSer.print(",");
+					comSer.println(que.size());
 #endif
 					for (int i = 0;i < que.size();++i)
 					{
 						String path = generatePath(que[i], ChessPoint(i, j, board[que[i].row][que[i].col]));
+#ifdef DEBUG
+						comSer.print("[info]");
+						comSer.print(path);
+#endif // DEBUG
 						if (checkPath(path, board))
 						{// 如果变化的是个合法的路径则认为是走子
 							// 修改棋盘
 							modifyBoard(board, path);
 							// 重置为初始状态
-							lastChangeChess = ChessPoint(-1, -1, b);
+							//lastChangeChess = ChessPoint(-1, -1, b);
+							que.clear();
 #ifdef DEBUG
-							comSer.print("[info]");
-							comSer.print(path);
+							
 							comSer.println("path available");
 #endif
 							return true;
 						}
+						else
+						{
+#ifdef DEBUG
+							comSer.println("path inavailable");
+#endif
+						}
+					}
+					for (int i = 0;i < que.size();++i)
+					{
+						if (que[i].row == i && que[i].col == j)
+							return false;
 					}
 					// 记录变化棋子
 					que.push(ChessPoint(i, j, board[i][j]));
@@ -516,7 +533,7 @@ void selectOrder()
 	}
 }
 
-void start()
+void start()	
 {
 	Lcd.clear();
 	selectDiff();
@@ -535,7 +552,7 @@ void playing()
 {
 	static unsigned long waitTime = millis(), hitTime = millis();
 	static bool waitTimeFlag1, waitTimeFlag2,hitFlag = true;
-	while (true)
+	/*while (true)
 	{
 #if enableHit
 		if(millis() - hitTime > 5000)
@@ -624,6 +641,23 @@ void playing()
 			}
 		}
 #endif
+	}*/
+	while (true)
+	{
+		while (true)
+		{
+			if (debugSer.available())
+			{
+				tmp = debugSer.readString();
+				debugSer.println(tmp);
+				break;
+			}
+		}
+		digitalWrite(ledPin, buf[0] ^= 1);
+		modifyBoard(board, tmp);
+		sendBoard(board);
+		tmp = readOrderFromHost();
+		executeOrder(tmp);
 	}
 }
 
@@ -994,7 +1028,7 @@ void putDownChess()
 	digitalWrite(MagnetUp, HIGH);
 	delay(100);
 	// 升起滑台
-	upDownMotor.run(FORWORD, zAxisStep, 500);
+	upDownMotor.run(FORWORD, zAxisStep - 20, 500);
 	// 断开电池铁
 	digitalWrite(MagnetDown, LOW);
 	digitalWrite(MagnetUp, LOW);
