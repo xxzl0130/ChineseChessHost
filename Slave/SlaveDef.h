@@ -150,7 +150,7 @@ public:
 // 选择难度
 #define DifficultyAudio	"dif.afs"
 // 玩家赢
-#define LoseAudio		"win.afs"
+#define LoseAudio		"los.afs"
 // 选择顺序
 #define OrderAudio		"ord.afs"
 // 先手
@@ -160,7 +160,7 @@ public:
 // 欢迎
 #define WelcomeAudio	"wel.afs"
 // 玩家输
-#define WinAudio		"los.afs"
+#define WinAudio		"win.afs"
 // “简单”
 #define EasyAudio		"eas.afs"
 // “普通”

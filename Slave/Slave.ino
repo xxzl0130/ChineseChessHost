@@ -41,6 +41,20 @@ Chess board[BoardRow][BoardCol] = {
 	{ R,H,E,A,K,A,E,H,R } // 0    |       9
 //    a b c d e f g h i
 };
+Chess BoardBack[BoardRow][BoardCol] = {
+	// 行号 | 针脚序号(RowStart +)
+	{ r,h,e,a,k,a,e,h,r },// 9    |       0
+	{ b,b,b,b,b,b,b,b,b },// 8    |       1
+	{ b,c,b,b,b,b,b,c,b },// 7    |       2
+	{ p,b,p,b,p,b,p,b,p },// 6    |       3
+	{ b,b,b,b,b,b,b,b,b },// 5    |       4
+	{ b,b,b,b,b,b,b,b,b },// 4    |       5
+	{ P,b,P,b,P,b,P,b,P },// 3    |       6
+	{ b,C,b,b,b,b,b,C,b },// 2    |       7
+	{ b,b,b,b,b,b,b,b,b },// 1    |       8
+	{ R,H,E,A,K,A,E,H,R } // 0    |       9
+						  //    a b c d e f g h i
+};
 // 记录棋子电平状态的数组
 bool boardState[BoardRow][BoardCol];
 // 玩家当前拿在手里的子，0为自己的子，1为电脑的子
@@ -139,9 +153,8 @@ void setup()
 	initPin();
 	initSDPlayer();
 	playAudio(InitAudio);
-	table.reset();
-	initSerial();
 	initBoard();
+	initSerial();
 	Lcd.setCursor(0, 1);
 	Lcd.print("INIT ALL DONE   ");
 }
@@ -649,14 +662,19 @@ void playing()
 		"b0b6",
 		"i0h0"
 	};
+	while (comSer.available())
+	{
+		tmp = comSer.readString();
+		comSer.println(tmp);
+	}
 	for (int i = 0;i < 5;++i)
 	{
 		while (true)
 		{
-			if (debugSer.available())
+			if (comSer.available())
 			{
-				tmp = debugSer.readString();
-				debugSer.println(tmp);
+				tmp = comSer.readString();
+				comSer.println(tmp);
 				break;
 			}
 		}
@@ -665,11 +683,14 @@ void playing()
 		tmp = readOrderFromHost();
 		executeOrder(tmp);
 	}
+	while (!isPress(EndKey, LOW));
+	gameOver(Lose);
 }
 
 void reset()
 {
 	initBoard();
+	memcpy(board, BoardBack, sizeof(board));
 }
 
 void gameOver(GameState state)
@@ -780,10 +801,6 @@ String readOrderFromHost()
 #endif
 		}
 		delay(100);
-#ifdef DEBUG
-		comSer.print("[info]");
-		comSer.println(comSer.available());
-#endif
 	}
 }
 
@@ -861,6 +878,7 @@ bool initSerial()
 
 void initBoard()
 {
+	table.reset();
 	Lcd.setCursor(0, 1);
 	Lcd.print("  BOARD INIT   ");
 	// 重置零点
@@ -991,7 +1009,7 @@ Point<double> getAvailableRecycleBin()
 		{
 			++list[i];
 			bin.y = boxWidth * i;
-			bin.x = xAxisLength + boxWidth * 2;
+			bin.x = boardWidth + boxWidth;
 		}
 	}
 	return bin;

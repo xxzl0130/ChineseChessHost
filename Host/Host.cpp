@@ -292,11 +292,13 @@ void screen2Slave()
 		try
 		{
 			// 从屏幕读入信息
-			string tmp;
+			/*string tmp;
 			cin >> tmp;
 			tmp += '\n';
 			// 向从机发送信息
-			slave.write(tmp);
+			slave.write(tmp);*/
+			getchar();
+			slave.write("1\n");
 		}
 		catch (exception& err)
 		{
